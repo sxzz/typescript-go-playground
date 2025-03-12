@@ -68,19 +68,20 @@ watchDebounced([code, tsconfig], () => compile(), {
 <template>
   <div
     flex="~ col"
-    h-screen
+    h-100dvh
     items-center
     px10
+    pb10
     :class="!loading && 'overflow-y-scroll'"
   >
     <h1
-      flex
+      flex="~ wrap"
       gap3
       py15
       text-3xl
       font-bold
       transition-all
-      :class="loading && 'animate-pulse translate-y-40vh'"
+      :class="loading && 'animate-pulse translate-y-40dvh'"
     >
       <img src="/favicon.svg" />
       <a
@@ -93,15 +94,15 @@ watchDebounced([code, tsconfig], () => compile(), {
     </h1>
 
     <div
-      flex="~ col"
       :class="loading && 'op0 invisible'"
+      flex="~ col"
       w-full
       items-center
       gap4
       transition-opacity
       duration-500
     >
-      <div h-80 w-full flex gap4>
+      <div h-80 w-full flex flex-col gap4 md:flex-row>
         <label flex="~ col" flex-1 items-center gap2>
           <code op80>main.ts</code>
           <textarea
@@ -130,7 +131,7 @@ watchDebounced([code, tsconfig], () => compile(), {
         </label>
       </div>
 
-      <div flex="~ col" w-50vw items-center gap2>
+      <div flex="~ col" max-w-200 w-full items-center gap2>
         Output
 
         <textarea
