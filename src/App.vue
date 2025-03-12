@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { useDark, watchDebounced } from '@vueuse/core'
+import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
 import { ref } from 'vue'
 import Worker from './worker?worker'
 import type { WorkerFunctions } from './worker'
+
+const ansiRegex = AnsiRegex()
 
 useDark()
 
@@ -43,7 +46,7 @@ async function compile() {
   compiling.value = true
   const result = await rpc.compile(code.value, tsconfig.value)
   compiling.value = false
-  output.value = result.output
+  output.value = result.output.replace(ansiRegex, '')
   timeCost.value = result.time
   error.value = !!result.error
 

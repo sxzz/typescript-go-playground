@@ -27,7 +27,7 @@ async function compile(code: string, tsconfig: string): Promise<CompileResult> {
   const { promise, resolve } = Promise.withResolvers<CompileResult>()
   wasmFs.volume.fromJSON(
     {
-      'index.ts': code,
+      'main.ts': code,
       'tsconfig.json': tsconfig,
     },
     '/',
@@ -51,7 +51,7 @@ async function compile(code: string, tsconfig: string): Promise<CompileResult> {
       })
     }
 
-    const output: string = wasmFs.fs.readFileSync('/index.js', 'utf8')
+    const output: string = wasmFs.fs.readFileSync('/main.js', 'utf8')
     resolve({ output, time })
   }
   go.argv = ['js', 'tsc']

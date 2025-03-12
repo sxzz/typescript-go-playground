@@ -14,6 +14,9 @@ importers:
       '@wasmer/wasmfs':
         specifier: ^0.12.0
         version: 0.12.0
+      ansi-regex:
+        specifier: ^6.1.0
+        version: 6.1.0
       birpc:
         specifier: ^2.2.0
         version: 2.2.0
@@ -746,6 +749,10 @@ packages:
 
   alien-signals@1.0.4:
     resolution: {integrity: sha512-DJqqQD3XcsaQcQ1s+iE2jDUZmmQpXwHiR6fCAim/w87luaW+vmLY8fMlrdkmRwzaFXhkxf3rqPCR59tKVv1MDw==}
+
+  ansi-regex@6.1.0:
+    resolution: {integrity: sha512-7HSX4QQb4CspciLpVFwyRe79O3xsIZDDLER21kERQ71oaPodF8jL725AgJMFAYbooIqolJoRLuM81SpeUkpkvA==}
+    engines: {node: '>=12'}
 
   ansi-styles@4.3.0:
     resolution: {integrity: sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==}
@@ -2791,6 +2798,8 @@ snapshots:
       uri-js: 4.4.1
 
   alien-signals@1.0.4: {}
+
+  ansi-regex@6.1.0: {}
 
   ansi-styles@4.3.0:
     dependencies:
