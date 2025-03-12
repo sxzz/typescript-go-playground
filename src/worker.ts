@@ -3,8 +3,8 @@ import { createBirpc } from 'birpc'
 import { createHighlighterCoreSync } from 'shiki/core'
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
 import js from 'shiki/langs/js.mjs'
-import vitesseLight from 'shiki/themes/vitesse-light.mjs'
 import vitesseDark from 'shiki/themes/vitesse-dark.mjs'
+import vitesseLight from 'shiki/themes/vitesse-light.mjs'
 import wasmUrl from './tsgo.wasm?url'
 import type { UIFunctions } from './App.vue'
 
@@ -15,6 +15,7 @@ globalThis.fs = wasmFs.fs
 const { Go } = await import('./wasm-exec.js')
 const go = new Go()
 const wasmBuffer = await fetch(wasmUrl).then((r) => r.arrayBuffer())
+const wasmMod = await WebAssembly.compile(wasmBuffer)
 
 const shiki = createHighlighterCoreSync({
   themes: [vitesseLight, vitesseDark],
@@ -69,7 +70,7 @@ async function compile(
 
     if (code !== 0) {
       return resolve({
-        output: `Compile failed!\n\n${stdout}\n\n${stderr}`,
+        output: `${stdout}\n\n${stderr}`,
         time,
         error: true,
       })
@@ -94,10 +95,7 @@ async function compile(
   }
   go.argv = ['js', 'tsc']
 
-  const { instance } = await WebAssembly.instantiate(
-    wasmBuffer,
-    go.importObject,
-  )
+  const instance = await WebAssembly.instantiate(wasmMod, go.importObject)
   await go.run(instance)
 
   return promise
