@@ -68,9 +68,9 @@ watchDebounced([code, tsconfig], () => compile(), {
 <template>
   <div
     flex="~ col"
+    h-screen
     items-center
     px10
-    h-screen
     :class="!loading && 'overflow-y-scroll'"
   >
     <h1

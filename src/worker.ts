@@ -8,6 +8,7 @@ const wasmFs = new WasmFs()
 globalThis.fs = wasmFs.fs
 // @ts-expect-error
 const { Go } = await import('./wasm-exec.js')
+const go = new Go()
 
 const workerFunctions = {
   compile,
@@ -37,7 +38,6 @@ async function compile(code: string, tsconfig: string): Promise<CompileResult> {
   )
 
   const t = performance.now()
-  const go = new Go()
   go.exit = async (code: number) => {
     const time = performance.now() - t
     const stdout = await wasmFs.getStdOut()
