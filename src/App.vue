@@ -66,6 +66,19 @@ watchDebounced([code, tsconfig, dark], () => compile(), {
 </script>
 
 <template>
+  <div flex justify-end p2>
+    <a
+      nav-button
+      href="https://github.com/sxzz/typescript-go-playground"
+      target="_blank"
+    >
+      <div i-ri:github-fill h-6 w-6 />
+    </a>
+    <button nav-button @click="dark = !dark">
+      <div :class="dark ? 'i-ri:moon-line' : 'i-ri:sun-line '" h-6 w-6 />
+    </button>
+  </div>
+
   <div
     flex="~ col"
     h-100dvh
@@ -76,14 +89,15 @@ watchDebounced([code, tsconfig, dark], () => compile(), {
   >
     <h1
       flex="~ wrap"
-      gap3
+      items-center
+      gap2
       py15
       text-3xl
       font-bold
       transition-all
       :class="loading && 'animate-pulse translate-y-35dvh'"
     >
-      <img src="/favicon.svg" />
+      <div i-catppuccin:typescript-test />
       <a
         href="https://github.com/microsoft/typescript-go"
         target="_blank"
