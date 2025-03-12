@@ -12,6 +12,7 @@ import { dark } from '../composables/dark'
       nav-button
       href="https://github.com/sxzz/typescript-go-playground"
       target="_blank"
+      rel="noopener"
     >
       <div i-ri:github-fill text-2xl />
     </a>
@@ -21,6 +22,7 @@ import { dark } from '../composables/dark'
       target="_blank"
       flex="~ center"
       title="Sponsor"
+      rel="noopener"
       group
       nav-button
     >
