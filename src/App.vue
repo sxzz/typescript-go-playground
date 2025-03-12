@@ -24,6 +24,8 @@ const tsconfig = ref(
 )
 const output = ref('')
 const compiling = ref(false)
+const timeCost = ref(0)
+const error = ref(false)
 
 const worker = new Worker()
 const rpc = createBirpc<WorkerFunctions>(
@@ -42,6 +44,8 @@ async function compile() {
   const result = await rpc.compile(code.value, tsconfig.value)
   compiling.value = false
   output.value = result.output
+  timeCost.value = result.time
+  error.value = !!result.error
 
   if (currentCode !== code.value) {
     compile()
@@ -86,20 +90,22 @@ watchDebounced([code, tsconfig], () => compile(), {
       </label>
     </div>
 
-    <div flex="~ col" items-center gap2>
-      output
+    <div flex="~ col" w-50vw items-center self-center gap2>
+      Output
 
       <textarea
         :value="compiling ? 'Compiling...' : output"
         readonly
         min-h-80
-        w-50vw
+        w-full
         border
         rounded-lg
         p2
         text-sm
         font-mono
+        :class="error && !compiling && 'text-red'"
       />
+      <div v-if="timeCost" self-end op70>{{ Math.round(timeCost) }} ms</div>
     </div>
   </div>
 </template>

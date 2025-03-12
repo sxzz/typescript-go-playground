@@ -17,14 +17,14 @@ createBirpc(workerFunctions, {
   on: (fn) => addEventListener('message', ({ data }) => fn(data)),
 })
 
-async function compile(
-  code: string,
-  tsconfig: string,
-): Promise<{ output: string; time: number }> {
-  const { promise, resolve } = Promise.withResolvers<{
-    output: string
-    time: number
-  }>()
+export interface CompileResult {
+  output: string
+  error?: boolean
+  time: number
+}
+
+async function compile(code: string, tsconfig: string): Promise<CompileResult> {
+  const { promise, resolve } = Promise.withResolvers<CompileResult>()
   wasmFs.volume.fromJSON(
     {
       'index.ts': code,
@@ -44,7 +44,11 @@ async function compile(
     if (stderr) console.info('stderr:', stderr)
 
     if (code !== 0) {
-      return resolve({ output: `Compile failed! stderr:\n${stderr}`, time })
+      return resolve({
+        output: `Compile failed!\n\n${stdout}\n\n${stderr}`,
+        time,
+        error: true,
+      })
     }
 
     const output: string = wasmFs.fs.readFileSync('/index.js', 'utf8')
