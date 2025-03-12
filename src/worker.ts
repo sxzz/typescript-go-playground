@@ -28,8 +28,13 @@ export interface CompileResult {
   time: number
 }
 
+const PATH_STDOUT = '/dev/stdout'
+const PATH_STDERR = '/dev/stderr'
+
 async function compile(code: string, tsconfig: string): Promise<CompileResult> {
   const { promise, resolve } = Promise.withResolvers<CompileResult>()
+  wasmFs.fs.writeFileSync(PATH_STDOUT, '')
+  wasmFs.fs.writeFileSync(PATH_STDERR, '')
   wasmFs.volume.fromJSON(
     {
       'main.ts': code,
@@ -42,7 +47,7 @@ async function compile(code: string, tsconfig: string): Promise<CompileResult> {
   go.exit = async (code: number) => {
     const time = performance.now() - t
     const stdout = await wasmFs.getStdOut()
-    const stderr = await wasmFs.fs.readFileSync('/dev/stderr', 'utf8')
+    const stderr = await wasmFs.fs.readFileSync(PATH_STDERR, 'utf8')
 
     if (stdout) console.info('stdout:', await wasmFs.getStdOut())
     if (stderr) console.info('stderr:', stderr)
