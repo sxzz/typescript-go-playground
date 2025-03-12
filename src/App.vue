@@ -81,7 +81,7 @@ watchDebounced([code, tsconfig], () => compile(), {
       text-3xl
       font-bold
       transition-all
-      :class="loading && 'animate-pulse translate-y-40dvh'"
+      :class="loading && 'animate-pulse translate-y-35dvh'"
     >
       <img src="/favicon.svg" />
       <a
