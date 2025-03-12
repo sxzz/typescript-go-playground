@@ -52,8 +52,8 @@ async function compile(
   const stdout = await wasmFs.getStdOut()
   const stderr = await wasmFs.fs.readFileSync(PATH_STDERR, 'utf8')
 
-  if (stdout) console.info('stdout:', await wasmFs.getStdOut())
-  if (stderr) console.info('stderr:', stderr)
+  if (stdout) console.info(`[stdout]:\n${await wasmFs.getStdOut()}`)
+  if (stderr) console.info(`[stderr]:\n${stderr}`)
 
   if (code !== 0) {
     return {

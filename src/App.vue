@@ -68,7 +68,8 @@ async function compile() {
   }
 }
 
-function highlight(code: string) {
+function highlight(code?: string) {
+  if (!code) return ''
   return shiki.codeToHtml(code.replace(ansiRegex, ''), {
     lang: 'js',
     theme: dark.value ? vitesseDark.name! : vitesseLight.name!,
