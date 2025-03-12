@@ -170,7 +170,7 @@ watchDebounced([code, tsconfig, dark], () => compile(), {
           />
           <div v-else h-full overflow-scroll v-html="output" />
         </div>
-        <div v-if="timeCost && !compiling" self-end op70>
+        <div self-end op70 :class="[timeCost && !compiling ? '' : 'invisible']">
           {{ Math.round(timeCost) }} ms
         </div>
       </div>
