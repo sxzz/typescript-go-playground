@@ -35,6 +35,7 @@ const worker = new Worker()
 const uiFunctions = {
   ready() {
     loading.value = false
+    compile()
   },
 }
 export type UIFunctions = typeof uiFunctions
@@ -44,7 +45,7 @@ const rpc = createBirpc<WorkerFunctions, UIFunctions>(uiFunctions, {
 })
 
 async function compile() {
-  if (compiling.value) return
+  if (loading.value || compiling.value) return
 
   const currentCode = code.value
   compiling.value = true
@@ -60,7 +61,6 @@ async function compile() {
 }
 
 watchDebounced([code, tsconfig], () => compile(), {
-  immediate: true,
   debounce: 200,
 })
 </script>
