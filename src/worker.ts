@@ -1,27 +1,13 @@
 import { WasmFs } from '@wasmer/wasmfs'
 import { createBirpc } from 'birpc'
-import { createHighlighterCoreSync } from 'shiki/core'
-import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
-import js from 'shiki/langs/js.mjs'
-import vitesseDark from 'shiki/themes/vitesse-dark.mjs'
-import vitesseLight from 'shiki/themes/vitesse-light.mjs'
 import wasmUrl from './tsgo.wasm?url'
 import type { UIFunctions } from './App.vue'
 
-const wasmFs = new WasmFs()
-// @ts-expect-error
-globalThis.fs = wasmFs.fs
 // @ts-expect-error
 const { Go } = await import('./wasm-exec.js')
 const go = new Go()
 const wasmBuffer = await fetch(wasmUrl).then((r) => r.arrayBuffer())
 const wasmMod = await WebAssembly.compile(wasmBuffer)
-
-const shiki = createHighlighterCoreSync({
-  themes: [vitesseLight, vitesseDark],
-  langs: [js],
-  engine: createJavaScriptRegexEngine(),
-})
 
 const workerFunctions = {
   compile,
@@ -35,68 +21,49 @@ const rpc = createBirpc<UIFunctions, WorkerFunctions>(workerFunctions, {
 rpc.ready()
 
 export interface CompileResult {
-  output: string
-  error?: boolean
+  output?: Record<string, string | null>
+  error?: string
   time: number
 }
 
-const PATH_STDOUT = '/dev/stdout'
 const PATH_STDERR = '/dev/stderr'
 
 async function compile(
-  code: string,
-  tsconfig: string,
-  dark: boolean,
+  filesJSON: string,
+  // dark: boolean,
 ): Promise<CompileResult> {
-  const { promise, resolve } = Promise.withResolvers<CompileResult>()
-  wasmFs.fs.writeFileSync(PATH_STDOUT, '')
-  wasmFs.fs.writeFileSync(PATH_STDERR, '')
-  wasmFs.volume.fromJSON(
-    {
-      'main.ts': code,
-      'tsconfig.json': tsconfig,
-    },
-    '/',
-  )
+  const wasmFs = new WasmFs()
+  // @ts-expect-error
+  globalThis.fs = wasmFs.fs
+
+  const files = JSON.parse(filesJSON)
+  wasmFs.volume.fromJSON(files, '/app')
 
   const t = performance.now()
-  go.exit = async (code: number) => {
-    const time = performance.now() - t
-    const stdout = await wasmFs.getStdOut()
-    const stderr = await wasmFs.fs.readFileSync(PATH_STDERR, 'utf8')
 
-    if (stdout) console.info('stdout:', await wasmFs.getStdOut())
-    if (stderr) console.info('stderr:', stderr)
-
-    if (code !== 0) {
-      return resolve({
-        output: `${stdout}\n\n${stderr}`,
-        time,
-        error: true,
-      })
-    }
-
-    const output: string = wasmFs.fs.readFileSync('/main.js', 'utf8')
-    resolve({
-      output: shiki.codeToHtml(output, {
-        lang: 'js',
-        theme: dark ? vitesseDark.name! : vitesseLight.name!,
-        transformers: [
-          {
-            name: 'remove-bg',
-            pre(node) {
-              delete node.properties.style
-            },
-          },
-        ],
-      }),
-      time,
-    })
-  }
+  const { promise, resolve } = Promise.withResolvers<number>()
+  go.exit = (code: number) => resolve(code)
   go.argv = ['js', 'tsc']
-
   const instance = await WebAssembly.instantiate(wasmMod, go.importObject)
   await go.run(instance)
+  const code = await promise
 
-  return promise
+  const time = performance.now() - t
+  const stdout = await wasmFs.getStdOut()
+  const stderr = await wasmFs.fs.readFileSync(PATH_STDERR, 'utf8')
+
+  if (stdout) console.info('stdout:', await wasmFs.getStdOut())
+  if (stderr) console.info('stderr:', stderr)
+
+  if (code !== 0) {
+    return {
+      time,
+      error: `Exit code: ${code}\n${stdout}\n\n${stderr}`,
+    }
+  }
+
+  return {
+    output: wasmFs.volume.toJSON('/app/dist', undefined, true),
+    time,
+  }
 }

@@ -2,33 +2,40 @@
 import { watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
-import { ref } from 'vue'
+import vitesseDark from 'shiki/themes/vitesse-dark.mjs'
+import vitesseLight from 'shiki/themes/vitesse-light.mjs'
+import { computed, reactive, ref } from 'vue'
 import NavBar from './components/NavBar.vue'
+import Tabs from './components/Tabs.vue'
 import { dark } from './composables/dark'
+import { shiki } from './composables/shiki'
 import Worker from './worker?worker'
 import type { WorkerFunctions } from './worker'
 
 const ansiRegex = AnsiRegex()
 
-const code = ref(`const x: number = 1`.trim())
-const tsconfig = ref(
-  JSON.stringify(
-    {
-      compilerOptions: {
-        target: 'esnext',
-        module: 'esnext',
-        strict: true,
-        esModuleInterop: true,
-      },
+const files = reactive(Object.create(null))
+const tabs = computed(() => Object.keys(files))
+files['main.ts'] = `const x: number = 1`
+files['tsconfig.json'] = JSON.stringify(
+  {
+    compilerOptions: {
+      target: 'esnext',
+      module: 'esnext',
+      strict: true,
+      esModuleInterop: true,
+      outDir: 'dist',
     },
-    undefined,
-    2,
-  ),
+  },
+  undefined,
+  2,
 )
-const output = ref('')
+const active = ref('main.ts')
+
+const outputFiles = ref(Object.create(null))
 const compiling = ref(false)
 const timeCost = ref(0)
-const error = ref(false)
+const error = ref<string>()
 const loading = ref(true)
 
 const worker = new Worker()
@@ -47,21 +54,30 @@ const rpc = createBirpc<WorkerFunctions, UIFunctions>(uiFunctions, {
 async function compile() {
   if (loading.value || compiling.value) return
 
-  const currentCode = code.value
+  const currentFiles = JSON.stringify(files)
   compiling.value = true
-  const result = await rpc.compile(code.value, tsconfig.value, dark.value)
+  const result = await rpc.compile(currentFiles)
   compiling.value = false
-  output.value = result.output.replace(ansiRegex, '')
-  timeCost.value = result.time
-  error.value = !!result.error
 
-  if (currentCode !== code.value) {
+  error.value = result.error
+  outputFiles.value = result.output
+  timeCost.value = result.time
+
+  if (currentFiles !== JSON.stringify(files)) {
     compile()
   }
 }
 
-watchDebounced([code, tsconfig, dark], () => compile(), {
+function highlight(code: string) {
+  return shiki.codeToHtml(code.replace(ansiRegex, ''), {
+    lang: 'js',
+    theme: dark.value ? vitesseDark.name! : vitesseLight.name!,
+  })
+}
+
+watchDebounced(files, () => compile(), {
   debounce: 200,
+  deep: true,
 })
 </script>
 
@@ -106,12 +122,11 @@ watchDebounced([code, tsconfig, dark], () => compile(), {
       transition-opacity
       duration-500
     >
-      <div h-80 w-full flex flex-col gap4 md:flex-row>
-        <label flex="~ col" flex-1 items-center gap2>
-          <code op80>main.ts</code>
+      <Tabs v-model="active" :tabs max-w-200 w-full>
+        <template #default="{ value }">
           <textarea
-            v-model="code"
-            h-full
+            v-model="files[value]"
+            h-80
             w-full
             border
             rounded-lg
@@ -119,35 +134,13 @@ watchDebounced([code, tsconfig, dark], () => compile(), {
             text-sm
             font-mono
           />
-        </label>
-        <label flex="~ col" flex-1 items-center gap2>
-          <code op80>tsconfig.json</code>
-          <textarea
-            v-model="tsconfig"
-            h-full
-            w-full
-            border
-            rounded-lg
-            p2
-            text-sm
-            font-mono
-          />
-        </label>
-      </div>
+        </template>
+      </Tabs>
 
       <div flex="~ col" max-w-200 w-full items-center gap2>
         Output
 
-        <div
-          min-h-80
-          w-full
-          border
-          rounded-lg
-          p2
-          text-sm
-          font-mono
-          dark:bg="#121212"
-        >
+        <div min-h-80 w-full>
           <div
             v-if="compiling"
             flex="~ col"
@@ -160,15 +153,12 @@ watchDebounced([code, tsconfig, dark], () => compile(), {
             <div i-logos:typescript-icon-round animate-bounce text-6xl />
             Compiling...
           </div>
-          <div
-            v-else-if="error"
-            h-full
-            overflow-scroll
-            whitespace-pre
-            text-red
-            v-text="output"
-          />
-          <div v-else h-full overflow-scroll v-html="output" />
+          <div v-else-if="error" text-red class="output" v-text="error" />
+          <Tabs v-else :tabs="Object.keys(outputFiles)" h-full>
+            <template #default="{ value }">
+              <div class="output" v-html="highlight(outputFiles[value])" />
+            </template>
+          </Tabs>
         </div>
         <div self-end op70 :class="[timeCost && !compiling ? '' : 'invisible']">
           {{ Math.round(timeCost) }} ms
@@ -201,3 +191,10 @@ watchDebounced([code, tsconfig, dark], () => compile(), {
     </div>
   </div>
 </template>
+
+<style>
+.output {
+  --at-apply: dark-bg-#121212 h-full overflow-scroll whitespace-pre border
+    rounded-lg p2 text-sm font-mono;
+}
+</style>
