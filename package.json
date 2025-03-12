@@ -1,0 +1,33 @@
+{
+  "name": "typescript-go-playground",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@vueuse/core": "^13.0.0",
+    "@wasmer/wasmfs": "^0.12.0",
+    "birpc": "^2.2.0",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@sxzz/eslint-config": "^6.0.2",
+    "@sxzz/prettier-config": "^2.2.1",
+    "@unocss/eslint-plugin": "66.1.0-beta.3",
+    "@unocss/reset": "66.1.0-beta.3",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/tsconfig": "^0.7.0",
+    "eslint": "^9.22.0",
+    "prettier": "^3.5.3",
+    "typescript": "~5.7.2",
+    "unocss": "^66.1.0-beta.3",
+    "vite": "^6.2.1",
+    "vue-tsc": "^2.2.8"
+  },
+  "prettier": "@sxzz/prettier-config"
+}
