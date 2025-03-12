@@ -29,15 +29,21 @@ const output = ref('')
 const compiling = ref(false)
 const timeCost = ref(0)
 const error = ref(false)
+const loading = ref(true)
 
 const worker = new Worker()
-const rpc = createBirpc<WorkerFunctions>(
-  {},
-  {
-    post: (data) => worker.postMessage(data),
-    on: (fn) => worker.addEventListener('message', ({ data }) => fn(data)),
+const uiFunctions = {
+  ready() {
+    setTimeout(() => {
+      loading.value = false
+    }, 1000)
   },
-)
+}
+export type UIFunctions = typeof uiFunctions
+const rpc = createBirpc<WorkerFunctions, UIFunctions>(uiFunctions, {
+  post: (data) => worker.postMessage(data),
+  on: (fn) => worker.addEventListener('message', ({ data }) => fn(data)),
+})
 
 async function compile() {
   if (compiling.value) return
@@ -57,13 +63,21 @@ async function compile() {
 
 watchDebounced([code, tsconfig], () => compile(), {
   immediate: true,
-  debounce: 300,
+  debounce: 200,
 })
 </script>
 
 <template>
-  <div flex="~ col" items-center gap4 px10>
-    <h1 flex gap3 py15 text-3xl font-bold>
+  <div flex="~ col" items-center px10>
+    <h1
+      flex
+      gap3
+      py15
+      text-3xl
+      font-bold
+      transition-all
+      :class="loading && 'animate-pulse translate-y-40vh'"
+    >
       <img src="/favicon.svg" />
       <a
         href="https://github.com/microsoft/typescript-go"
@@ -73,51 +87,62 @@ watchDebounced([code, tsconfig], () => compile(), {
       >
       Playground
     </h1>
-    <div h-80 w-full flex gap4>
-      <label flex="~ col" flex-1 items-center gap2>
-        <code op80>main.ts</code>
+
+    <div
+      flex="~ col"
+      :class="loading && 'op0 hidden'"
+      w-full
+      items-center
+      gap4
+      transition-opacity
+      duration-500
+    >
+      <div h-80 w-full flex gap4>
+        <label flex="~ col" flex-1 items-center gap2>
+          <code op80>main.ts</code>
+          <textarea
+            v-model="code"
+            h-full
+            w-full
+            border
+            rounded-lg
+            p2
+            text-sm
+            font-mono
+          />
+        </label>
+        <label flex="~ col" flex-1 items-center gap2>
+          <code op80>tsconfig.json</code>
+          <textarea
+            v-model="tsconfig"
+            h-full
+            w-full
+            border
+            rounded-lg
+            p2
+            text-sm
+            font-mono
+          />
+        </label>
+      </div>
+
+      <div flex="~ col" w-50vw items-center gap2>
+        Output
+
         <textarea
-          v-model="code"
-          h-full
+          :value="compiling ? 'Compiling...' : output"
+          readonly
+          min-h-80
           w-full
           border
           rounded-lg
           p2
           text-sm
           font-mono
+          :class="error && !compiling && 'text-red'"
         />
-      </label>
-      <label flex="~ col" flex-1 items-center gap2>
-        <code op80>tsconfig.json</code>
-        <textarea
-          v-model="tsconfig"
-          h-full
-          w-full
-          border
-          rounded-lg
-          p2
-          text-sm
-          font-mono
-        />
-      </label>
-    </div>
-
-    <div flex="~ col" w-50vw items-center gap2>
-      Output
-
-      <textarea
-        :value="compiling ? 'Compiling...' : output"
-        readonly
-        min-h-80
-        w-full
-        border
-        rounded-lg
-        p2
-        text-sm
-        font-mono
-        :class="error && !compiling && 'text-red'"
-      />
-      <div v-if="timeCost" self-end op70>{{ Math.round(timeCost) }} ms</div>
+        <div v-if="timeCost" self-end op70>{{ Math.round(timeCost) }} ms</div>
+      </div>
     </div>
   </div>
 </template>

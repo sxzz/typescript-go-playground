@@ -1,6 +1,7 @@
 import { WasmFs } from '@wasmer/wasmfs'
 import { createBirpc } from 'birpc'
 import wasm from './tsgo.wasm?init'
+import type { UIFunctions } from './App.vue'
 
 const wasmFs = new WasmFs()
 // @ts-expect-error
@@ -12,10 +13,12 @@ const workerFunctions = {
   compile,
 }
 export type WorkerFunctions = typeof workerFunctions
-createBirpc(workerFunctions, {
+const rpc = createBirpc<UIFunctions, WorkerFunctions>(workerFunctions, {
   post: (data) => postMessage(data),
   on: (fn) => addEventListener('message', ({ data }) => fn(data)),
 })
+
+rpc.ready()
 
 export interface CompileResult {
   output: string
