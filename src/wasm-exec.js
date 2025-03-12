@@ -132,7 +132,7 @@ if (!globalThis.process) {
       throw enosys()
     },
     cwd() {
-      throw enosys()
+      return '/'
     },
     chdir() {
       throw enosys()
