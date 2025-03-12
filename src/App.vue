@@ -62,15 +62,24 @@ watchDebounced([code, tsconfig], () => compile(), {
 </script>
 
 <template>
-  <div flex="~ col" gap4 p4>
-    <h1 text-3xl font-bold>TypeScript Go Playground</h1>
-    <div flex gap4>
-      <label flex="~ col" items-center gap2>
+  <div flex="~ col" items-center gap4 px10>
+    <h1 flex gap3 py15 text-3xl font-bold>
+      <img src="/favicon.svg" />
+      <a
+        href="https://github.com/microsoft/typescript-go"
+        target="_blank"
+        class="text-#8aadf4"
+        >TypeScript Go</a
+      >
+      Playground
+    </h1>
+    <div h-80 w-full flex gap4>
+      <label flex="~ col" flex-1 items-center gap2>
         <code op80>main.ts</code>
         <textarea
           v-model="code"
-          h-80
-          w-200
+          h-full
+          w-full
           border
           rounded-lg
           p2
@@ -78,12 +87,12 @@ watchDebounced([code, tsconfig], () => compile(), {
           font-mono
         />
       </label>
-      <label flex="~ col" items-center gap2>
+      <label flex="~ col" flex-1 items-center gap2>
         <code op80>tsconfig.json</code>
         <textarea
           v-model="tsconfig"
-          h-80
-          w-200
+          h-full
+          w-full
           border
           rounded-lg
           p2
@@ -93,7 +102,7 @@ watchDebounced([code, tsconfig], () => compile(), {
       </label>
     </div>
 
-    <div flex="~ col" w-50vw items-center self-center gap2>
+    <div flex="~ col" w-50vw items-center gap2>
       Output
 
       <textarea
