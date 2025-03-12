@@ -34,9 +34,7 @@ const loading = ref(true)
 const worker = new Worker()
 const uiFunctions = {
   ready() {
-    setTimeout(() => {
-      loading.value = false
-    }, 1000)
+    loading.value = false
   },
 }
 export type UIFunctions = typeof uiFunctions
@@ -68,7 +66,13 @@ watchDebounced([code, tsconfig], () => compile(), {
 </script>
 
 <template>
-  <div flex="~ col" items-center px10>
+  <div
+    flex="~ col"
+    items-center
+    px10
+    h-screen
+    :class="!loading && 'overflow-y-scroll'"
+  >
     <h1
       flex
       gap3
@@ -90,7 +94,7 @@ watchDebounced([code, tsconfig], () => compile(), {
 
     <div
       flex="~ col"
-      :class="loading && 'op0 hidden'"
+      :class="loading && 'op0 invisible'"
       w-full
       items-center
       gap4
