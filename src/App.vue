@@ -8,7 +8,7 @@ import type { WorkerFunctions } from './worker'
 
 const ansiRegex = AnsiRegex()
 
-useDark()
+const dark = useDark()
 
 const code = ref(`const x: number = 1`.trim())
 const tsconfig = ref(
@@ -49,7 +49,7 @@ async function compile() {
 
   const currentCode = code.value
   compiling.value = true
-  const result = await rpc.compile(code.value, tsconfig.value)
+  const result = await rpc.compile(code.value, tsconfig.value, dark.value)
   compiling.value = false
   output.value = result.output.replace(ansiRegex, '')
   timeCost.value = result.time
@@ -60,7 +60,7 @@ async function compile() {
   }
 }
 
-watchDebounced([code, tsconfig], () => compile(), {
+watchDebounced([code, tsconfig, dark], () => compile(), {
   debounce: 200,
 })
 </script>
@@ -134,9 +134,7 @@ watchDebounced([code, tsconfig], () => compile(), {
       <div flex="~ col" max-w-200 w-full items-center gap2>
         Output
 
-        <textarea
-          :value="compiling ? 'Compiling...' : output"
-          readonly
+        <div
           min-h-80
           w-full
           border
@@ -144,8 +142,12 @@ watchDebounced([code, tsconfig], () => compile(), {
           p2
           text-sm
           font-mono
-          :class="error && !compiling && 'text-red'"
-        />
+          dark:bg="#121212"
+        >
+          <div v-if="compiling">Compiling...</div>
+          <div v-else-if="error" whitespace-pre text-red v-text="output" />
+          <div v-else v-html="output" />
+        </div>
         <div v-if="timeCost" self-end op70>{{ Math.round(timeCost) }} ms</div>
       </div>
     </div>

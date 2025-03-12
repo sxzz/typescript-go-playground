@@ -8,6 +8,10 @@ html.dark {
   background-color: var(--c-bg-base);
 }
 
+html.dark textarea {
+  background-color: #121212;
+}
+
 :root {
   --c-border: #eee;
   --c-bg-base: #fff;

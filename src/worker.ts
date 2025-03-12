@@ -1,5 +1,10 @@
 import { WasmFs } from '@wasmer/wasmfs'
 import { createBirpc } from 'birpc'
+import { createHighlighterCoreSync } from 'shiki/core'
+import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
+import js from 'shiki/langs/js.mjs'
+import vitesseLight from 'shiki/themes/vitesse-light.mjs'
+import vitesseDark from 'shiki/themes/vitesse-dark.mjs'
 import wasmUrl from './tsgo.wasm?url'
 import type { UIFunctions } from './App.vue'
 
@@ -10,6 +15,12 @@ globalThis.fs = wasmFs.fs
 const { Go } = await import('./wasm-exec.js')
 const go = new Go()
 const wasmBuffer = await fetch(wasmUrl).then((r) => r.arrayBuffer())
+
+const shiki = createHighlighterCoreSync({
+  themes: [vitesseLight, vitesseDark],
+  langs: [js],
+  engine: createJavaScriptRegexEngine(),
+})
 
 const workerFunctions = {
   compile,
@@ -31,7 +42,11 @@ export interface CompileResult {
 const PATH_STDOUT = '/dev/stdout'
 const PATH_STDERR = '/dev/stderr'
 
-async function compile(code: string, tsconfig: string): Promise<CompileResult> {
+async function compile(
+  code: string,
+  tsconfig: string,
+  dark: boolean,
+): Promise<CompileResult> {
   const { promise, resolve } = Promise.withResolvers<CompileResult>()
   wasmFs.fs.writeFileSync(PATH_STDOUT, '')
   wasmFs.fs.writeFileSync(PATH_STDERR, '')
@@ -61,7 +76,21 @@ async function compile(code: string, tsconfig: string): Promise<CompileResult> {
     }
 
     const output: string = wasmFs.fs.readFileSync('/main.js', 'utf8')
-    resolve({ output, time })
+    resolve({
+      output: shiki.codeToHtml(output, {
+        lang: 'js',
+        theme: dark ? vitesseDark.name! : vitesseLight.name!,
+        transformers: [
+          {
+            name: 'remove-bg',
+            pre(node) {
+              delete node.properties.style
+            },
+          },
+        ],
+      }),
+      time,
+    })
   }
   go.argv = ['js', 'tsc']
 
