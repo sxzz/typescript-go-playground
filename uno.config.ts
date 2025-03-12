@@ -8,7 +8,13 @@ import {
 export default defineConfig({
   shortcuts: {
     'nav-button':
-      'flex items-center justify-center rounded-full p2 op50 hover:bg-gray hover:bg-opacity-20 hover:op100',
+      'flex items-center justify-center rounded-full p2 op50 hover:bg-gray hover:bg-opacity-10 hover:op100',
   },
-  presets: [presetWind3(), presetIcons(), presetAttributify()],
+  presets: [
+    presetWind3({
+      attributifyPseudo: true,
+    }),
+    presetIcons(),
+    presetAttributify(),
+  ],
 })

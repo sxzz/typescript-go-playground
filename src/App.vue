@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { useDark, watchDebounced } from '@vueuse/core'
+import { watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
 import { ref } from 'vue'
+import NavBar from './components/NavBar.vue'
+import { dark } from './composables/dark'
 import Worker from './worker?worker'
 import type { WorkerFunctions } from './worker'
 
 const ansiRegex = AnsiRegex()
-
-const dark = useDark()
 
 const code = ref(`const x: number = 1`.trim())
 const tsconfig = ref(
@@ -66,27 +66,17 @@ watchDebounced([code, tsconfig, dark], () => compile(), {
 </script>
 
 <template>
-  <div flex justify-end p2>
-    <a
-      nav-button
-      href="https://github.com/sxzz/typescript-go-playground"
-      target="_blank"
-    >
-      <div i-ri:github-fill h-6 w-6 />
-    </a>
-    <button nav-button @click="dark = !dark">
-      <div :class="dark ? 'i-ri:moon-line' : 'i-ri:sun-line '" h-6 w-6 />
-    </button>
-  </div>
-
   <div
     flex="~ col"
+    :class="!loading && 'overflow-y-scroll'"
+    relative
     h-100dvh
     items-center
     px10
     pb10
-    :class="!loading && 'overflow-y-scroll'"
+    pt4
   >
+    <NavBar absolute />
     <h1
       flex="~ wrap"
       items-center
@@ -158,7 +148,18 @@ watchDebounced([code, tsconfig, dark], () => compile(), {
           font-mono
           dark:bg="#121212"
         >
-          <div v-if="compiling">Compiling...</div>
+          <div
+            v-if="compiling"
+            flex="~ col"
+            h-full
+            w-full
+            items-center
+            justify-center
+            gap3
+          >
+            <div i-logos:typescript-icon-round animate-bounce text-6xl />
+            Compiling...
+          </div>
           <div
             v-else-if="error"
             h-full
@@ -169,7 +170,9 @@ watchDebounced([code, tsconfig, dark], () => compile(), {
           />
           <div v-else h-full overflow-scroll v-html="output" />
         </div>
-        <div v-if="timeCost" self-end op70>{{ Math.round(timeCost) }} ms</div>
+        <div v-if="timeCost && !compiling" self-end op70>
+          {{ Math.round(timeCost) }} ms
+        </div>
       </div>
     </div>
   </div>

@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@iconify-json/catppuccin": "^1.2.9",
+    "@iconify-json/logos": "^1.2.4",
     "@iconify-json/ri": "^1.2.5",
     "@sxzz/eslint-config": "^6.0.2",
     "@sxzz/prettier-config": "^2.2.1",
