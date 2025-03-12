@@ -159,8 +159,15 @@ watchDebounced([code, tsconfig, dark], () => compile(), {
           dark:bg="#121212"
         >
           <div v-if="compiling">Compiling...</div>
-          <div v-else-if="error" whitespace-pre text-red v-text="output" />
-          <div v-else v-html="output" />
+          <div
+            v-else-if="error"
+            h-full
+            overflow-scroll
+            whitespace-pre
+            text-red
+            v-text="output"
+          />
+          <div v-else h-full overflow-scroll v-html="output" />
         </div>
         <div v-if="timeCost" self-end op70>{{ Math.round(timeCost) }} ms</div>
       </div>
