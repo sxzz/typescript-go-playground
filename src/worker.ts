@@ -1,6 +1,6 @@
 import { WasmFs } from '@wasmer/wasmfs'
 import { createBirpc } from 'birpc'
-import wasm from './tsgo.wasm?init'
+import wasmUrl from './tsgo.wasm?url'
 import type { UIFunctions } from './App.vue'
 
 const wasmFs = new WasmFs()
@@ -9,6 +9,7 @@ globalThis.fs = wasmFs.fs
 // @ts-expect-error
 const { Go } = await import('./wasm-exec.js')
 const go = new Go()
+const wasmBuffer = await fetch(wasmUrl).then((r) => r.arrayBuffer())
 
 const workerFunctions = {
   compile,
@@ -59,7 +60,10 @@ async function compile(code: string, tsconfig: string): Promise<CompileResult> {
   }
   go.argv = ['js', 'tsc']
 
-  const instance = await wasm(go.importObject)
+  const { instance } = await WebAssembly.instantiate(
+    wasmBuffer,
+    go.importObject,
+  )
   await go.run(instance)
 
   return promise
