@@ -6,35 +6,26 @@ import { editor } from 'monaco-editor'
 import * as monaco from 'monaco-editor'
 import vitesseDark from 'shiki/themes/vitesse-dark.mjs'
 import vitesseLight from 'shiki/themes/vitesse-light.mjs'
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import NavBar from './components/NavBar.vue'
 import Tabs from './components/Tabs.vue'
 import { dark } from './composables/dark'
 import { useEditor } from './composables/editor'
 import { shiki } from './composables/shiki'
+import {
+  active,
+  compiling,
+  error,
+  files,
+  loading,
+  outputFiles,
+  tabs,
+  timeCost,
+} from './composables/state'
 import Worker from './worker?worker'
 import type { WorkerFunctions } from './worker'
 
 const ansiRegex = AnsiRegex()
-
-const files = reactive(Object.create(null))
-const tabs = computed(() => Object.keys(files))
-
-files['main.ts'] = `const x: number = 1`
-files['tsconfig.json'] = JSON.stringify(
-  {
-    compilerOptions: {
-      target: 'esnext',
-      module: 'esnext',
-      strict: true,
-      esModuleInterop: true,
-      outDir: 'dist',
-    },
-  },
-  undefined,
-  2,
-)
-const active = ref('main.ts')
 
 const tsModel = editor.createModel(
   files['main.ts'],
@@ -57,13 +48,13 @@ tsconfigModel.onDidChangeContent(() => {
     tsconfig.compilerOptions,
   )
 })
-
-const outputFiles = ref(Object.create(null))
-const compiling = ref(false)
-const timeCost = ref(0)
-const error = ref<string>()
-const loading = ref(true)
 const editorRef = ref<HTMLElement>()
+
+const model = computed(() =>
+  active.value === 'main.ts' ? tsModel : tsconfigModel,
+)
+
+useEditor(model, editorRef, dark)
 
 const worker = new Worker()
 const uiFunctions = {
@@ -102,12 +93,6 @@ function highlight(code?: string) {
     theme: dark.value ? vitesseDark.name! : vitesseLight.name!,
   })
 }
-
-const model = computed(() =>
-  active.value === 'main.ts' ? tsModel : tsconfigModel,
-)
-
-useEditor(model, editorRef, dark)
 
 watchDebounced(files, () => compile(), {
   debounce: 200,
