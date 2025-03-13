@@ -20,6 +20,8 @@ files['tsconfig.json'] = JSON.stringify(
 export const active = ref('main.ts')
 
 export const outputFiles = ref(Object.create(null))
+export const outputActive = ref('main.js')
+
 export const compiling = ref(false)
 export const timeCost = ref(0)
 export const error = ref<string>()

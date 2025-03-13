@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watchDebounced } from '@vueuse/core'
+import { useClipboard, watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
 import { editor } from 'monaco-editor'
@@ -17,6 +17,7 @@ import {
   error,
   files,
   loading,
+  outputActive,
   outputFiles,
   tabs,
   timeCost,
@@ -99,6 +100,11 @@ watchDebounced(files, () => compile(), {
   debounce: 200,
   deep: true,
 })
+
+const { copy, copied } = useClipboard()
+function handleCopy() {
+  copy(outputFiles.value[outputActive.value])
+}
 </script>
 
 <template>
@@ -174,9 +180,38 @@ watchDebounced(files, () => compile(), {
           v-text="error.replace(ansiRegex, '')"
         />
 
-        <Tabs v-else :tabs="Object.keys(outputFiles)" h-full w-full>
+        <Tabs
+          v-else
+          v-model="outputActive"
+          :tabs="Object.keys(outputFiles)"
+          h-full
+          w-full
+        >
           <template #default="{ value }">
-            <div class="output" v-html="highlight(outputFiles[value])" />
+            <div group relative h-full w-full>
+              <div class="output" v-html="highlight(outputFiles[value])" />
+              <button
+                absolute
+                right-4
+                top-4
+                rounded-lg
+                p2
+                op0
+                transition-opacity
+                hover:bg-gray
+                hover:bg-opacity-10
+                group-hover:opacity-100
+                @click="handleCopy"
+              >
+                <div
+                  :class="
+                    copied
+                      ? 'i-ri:check-line text-green'
+                      : 'i-ri:file-copy-line'
+                  "
+                />
+              </button>
+            </div>
           </template>
         </Tabs>
 
