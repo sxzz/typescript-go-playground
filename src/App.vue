@@ -98,7 +98,7 @@ watchDebounced(files, () => compile(), {
       flex="~ wrap"
       items-center
       gap2
-      py15
+      py12
       text-3xl
       font-bold
       transition-all
@@ -127,7 +127,7 @@ watchDebounced(files, () => compile(), {
         <template #default="{ value }">
           <textarea
             v-model="files[value]"
-            h-80
+            h-75
             w-full
             border
             rounded-lg
@@ -139,8 +139,6 @@ watchDebounced(files, () => compile(), {
       </Tabs>
 
       <div flex="~ col" max-w-200 w-full items-center gap2>
-        Output
-
         <div min-h-80 w-full>
           <div
             v-if="compiling"
@@ -167,7 +165,7 @@ watchDebounced(files, () => compile(), {
       </div>
     </div>
 
-    <div flex="~" mt10 items-center gap="1.2" text-hex-888e>
+    <div flex="~" mt4 items-center gap="1.2" text-hex-888e>
       Made with
       <div i-ri:heart-3-line text-pink />
       by
