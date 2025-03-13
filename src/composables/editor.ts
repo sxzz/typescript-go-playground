@@ -8,7 +8,6 @@ export const useEditor = (
 ) => {
   const editorInstance = shallowRef<editor.IStandaloneCodeEditor | null>(null)
 
-  // 使用 watch 而不是 effect
   watch(
     [dom, model, dark],
     ([domValue, modelValue, darkValue]) => {
