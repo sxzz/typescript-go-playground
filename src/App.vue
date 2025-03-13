@@ -85,15 +85,15 @@ watchDebounced(files, () => compile(), {
 <template>
   <div
     flex="~ col"
-    :class="!loading && 'overflow-y-scroll'"
     relative
     h-100dvh
     items-center
     px10
-    pb10
     pt4
+    :class="!loading && 'overflow-y-scroll'"
   >
     <NavBar absolute />
+
     <h1
       flex="~ wrap"
       items-center
@@ -116,19 +116,21 @@ watchDebounced(files, () => compile(), {
 
     <div
       :class="loading && 'op0 invisible'"
-      flex="~ col"
       w-full
+      flex
+      flex-1
+      flex-col
       items-center
       gap4
       transition-opacity
       duration-500
+      md:flex-row
     >
-      <Tabs v-model="active" :tabs max-w-200 w-full>
+      <Tabs v-model="active" :tabs h-full min-w-0 w-full flex-1>
         <template #default="{ value }">
           <textarea
             v-model="files[value]"
-            h-75
-            w-full
+            h-full
             border
             rounded-lg
             p2
@@ -138,34 +140,46 @@ watchDebounced(files, () => compile(), {
         </template>
       </Tabs>
 
-      <div flex="~ col" max-w-200 w-full items-center gap2>
-        <div min-h-80 w-full>
-          <div
-            v-if="compiling"
-            flex="~ col"
-            h-full
-            w-full
-            items-center
-            justify-center
-            gap3
-          >
-            <div i-logos:typescript-icon-round animate-bounce text-6xl />
-            Compiling...
-          </div>
-          <div v-else-if="error" text-red class="output" v-text="error" />
-          <Tabs v-else :tabs="Object.keys(outputFiles)" h-full>
-            <template #default="{ value }">
-              <div class="output" v-html="highlight(outputFiles[value])" />
-            </template>
-          </Tabs>
+      <div flex="~ col" h-full min-w-0 w-full flex-1 items-center gap2>
+        <div
+          v-if="compiling"
+          flex="~ col"
+          h-full
+          w-full
+          items-center
+          justify-center
+          gap3
+        >
+          <div i-logos:typescript-icon-round animate-bounce text-6xl />
+          Compiling...
         </div>
-        <div self-end op70 :class="[timeCost && !compiling ? '' : 'invisible']">
+
+        <div
+          v-else-if="error"
+          text-red
+          class="output"
+          mt="12.5"
+          v-text="error.replace(ansiRegex, '')"
+        />
+
+        <Tabs v-else :tabs="Object.keys(outputFiles)" h-full w-full>
+          <template #default="{ value }">
+            <div class="output" v-html="highlight(outputFiles[value])" />
+          </template>
+        </Tabs>
+
+        <div
+          v-if="!compiling"
+          self-end
+          op70
+          :class="[timeCost && !compiling ? '' : 'invisible']"
+        >
           {{ Math.round(timeCost) }} ms
         </div>
       </div>
     </div>
 
-    <div flex="~" mt4 items-center gap="1.2" text-hex-888e>
+    <div flex="~" gap="1.2" mb6 mt4 items-center text-hex-888e>
       Made with
       <div i-ri:heart-3-line text-pink />
       by
@@ -193,7 +207,7 @@ watchDebounced(files, () => compile(), {
 
 <style>
 .output {
-  --at-apply: dark-bg-#121212 h-full overflow-scroll whitespace-pre border
-    rounded-lg p2 text-sm font-mono;
+  --at-apply: dark-bg-#121212 w-full h-full overflow-scroll whitespace-pre
+    border rounded-lg p2 text-sm font-mono;
 }
 </style>
