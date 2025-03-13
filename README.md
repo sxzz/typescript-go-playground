@@ -1,6 +1,14 @@
 # TypeScript Go Playground
 
-This is a simple playground that allows you to experience [TypeScript 7](https://github.com/microsoft/typescript-go) online!
+This is a playground that allows you to experience [TypeScript 7](https://github.com/microsoft/typescript-go) online!
+
+## Build WASM
+
+The WASM file is built from [sxzz/typescript-go-wasm](https://github.com/sxzz/typescript-go-wasm) with the following command:
+
+```bash
+GOOS=js GOARCH=wasm go build -o tsgo.wasm ./cmd/tsgo
+```
 
 ## Sponsors
 
