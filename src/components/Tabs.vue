@@ -16,11 +16,11 @@ const active = defineModel<string>({
       <div
         v-for="name of tabs"
         :key="name"
-        cursor-pointer
         border-b="~ 2"
-        p2
-        op80
-        :class="active === name && 'border-b-blue-500 color-blue-500'"
+        cursor-pointer
+        px2
+        py1
+        :class="active === name ? 'border-b-blue-500 color-blue-500' : 'op70'"
         @click="active = name"
       >
         {{ name }}
