@@ -1,11 +1,12 @@
 import { createHighlighterCoreSync } from 'shiki/core'
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
 import js from 'shiki/langs/js.mjs'
-import vitesseDark from 'shiki/themes/vitesse-dark.mjs'
-import vitesseLight from 'shiki/themes/vitesse-light.mjs'
+import darkPlus from 'shiki/themes/dark-plus.mjs'
+import lightPlus from 'shiki/themes/light-plus.mjs'
 
 export const shiki = createHighlighterCoreSync({
-  themes: [vitesseLight, vitesseDark],
+  themes: [lightPlus, darkPlus],
   langs: [js],
   engine: createJavaScriptRegexEngine(),
 })
+export { darkPlus as themeDark, lightPlus as themeLight }

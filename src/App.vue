@@ -4,15 +4,13 @@ import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
 import { editor } from 'monaco-editor'
 import * as monaco from 'monaco-editor'
-import vitesseDark from 'shiki/themes/vitesse-dark.mjs'
-import vitesseLight from 'shiki/themes/vitesse-light.mjs'
-import { computed, ref } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import NavBar from './components/NavBar.vue'
 import PageFooter from './components/PageFooter.vue'
 import Tabs from './components/Tabs.vue'
 import { dark } from './composables/dark'
 import { useEditor } from './composables/editor'
-import { shiki } from './composables/shiki'
+import { shiki, themeDark, themeLight } from './composables/shiki'
 import {
   active,
   compiling,
@@ -44,12 +42,14 @@ const tsconfigModel = editor.createModel(
 tsconfigModel.onDidChangeContent(() => {
   const value = tsconfigModel.getValue()
   files['tsconfig.json'] = value
-  const tsconfig = JSON.parse(value)
-  monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
-    tsconfig.compilerOptions,
-  )
+  try {
+    const tsconfig = JSON.parse(value)
+    monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
+      tsconfig.compilerOptions,
+    )
+  } catch {}
 })
-const editorRef = ref<HTMLElement>()
+const editorRef = useTemplateRef('editorRef')
 
 const model = computed(() =>
   active.value === 'main.ts' ? tsModel : tsconfigModel,
@@ -91,7 +91,7 @@ function highlight(code?: string) {
   if (!code) return ''
   return shiki.codeToHtml(code.replace(ansiRegex, ''), {
     lang: 'js',
-    theme: dark.value ? vitesseDark.name! : vitesseLight.name!,
+    theme: dark.value ? themeDark.name! : themeLight.name!,
   })
 }
 
@@ -197,7 +197,7 @@ watchDebounced(files, () => compile(), {
 
 <style>
 .output {
-  --at-apply: dark-bg-#121212 w-full h-full overflow-scroll whitespace-pre
+  --at-apply: dark-bg-#1E1E1E w-full h-full overflow-scroll whitespace-pre
     border rounded-lg p2 text-sm font-mono;
 }
 </style>
