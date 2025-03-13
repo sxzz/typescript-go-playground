@@ -2,12 +2,15 @@
 import { watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
+import { editor } from 'monaco-editor'
+import * as monaco from 'monaco-editor'
 import vitesseDark from 'shiki/themes/vitesse-dark.mjs'
 import vitesseLight from 'shiki/themes/vitesse-light.mjs'
 import { computed, reactive, ref } from 'vue'
 import NavBar from './components/NavBar.vue'
 import Tabs from './components/Tabs.vue'
 import { dark } from './composables/dark'
+import { useEditor } from './composables/editor'
 import { shiki } from './composables/shiki'
 import Worker from './worker?worker'
 import type { WorkerFunctions } from './worker'
@@ -16,6 +19,7 @@ const ansiRegex = AnsiRegex()
 
 const files = reactive(Object.create(null))
 const tabs = computed(() => Object.keys(files))
+
 files['main.ts'] = `const x: number = 1`
 files['tsconfig.json'] = JSON.stringify(
   {
@@ -32,11 +36,34 @@ files['tsconfig.json'] = JSON.stringify(
 )
 const active = ref('main.ts')
 
+const tsModel = editor.createModel(
+  files['main.ts'],
+  'typescript',
+  monaco.Uri.parse('inmemory://model/main.ts'),
+)
+tsModel.onDidChangeContent(() => {
+  files['main.ts'] = tsModel.getValue()
+})
+const tsconfigModel = editor.createModel(
+  files['tsconfig.json'],
+  'json',
+  monaco.Uri.parse('inmemory:///model/tsconfig.json'),
+)
+tsconfigModel.onDidChangeContent(() => {
+  const value = tsconfigModel.getValue()
+  files['tsconfig.json'] = value
+  const tsconfig = JSON.parse(value)
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
+    tsconfig.compilerOptions,
+  )
+})
+
 const outputFiles = ref(Object.create(null))
 const compiling = ref(false)
 const timeCost = ref(0)
 const error = ref<string>()
 const loading = ref(true)
+const editorRef = ref<HTMLElement | null>(null)
 
 const worker = new Worker()
 const uiFunctions = {
@@ -75,6 +102,12 @@ function highlight(code?: string) {
     theme: dark.value ? vitesseDark.name! : vitesseLight.name!,
   })
 }
+
+const model = computed(() =>
+  active.value === 'main.ts' ? tsModel : tsconfigModel,
+)
+
+useEditor(model, editorRef, dark)
 
 watchDebounced(files, () => compile(), {
   debounce: 200,
@@ -127,17 +160,7 @@ watchDebounced(files, () => compile(), {
       md:flex-row
     >
       <Tabs v-model="active" :tabs h-full min-w-0 w-full flex-1>
-        <template #default="{ value }">
-          <textarea
-            v-model="files[value]"
-            h-full
-            border
-            rounded-lg
-            p2
-            text-sm
-            font-mono
-          />
-        </template>
+        <div ref="editorRef" h-full border rounded-lg p2 text-sm font-mono />
       </Tabs>
 
       <div flex="~ col" h-full min-w-0 w-full flex-1 items-center gap2>
