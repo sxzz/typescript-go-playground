@@ -8,6 +8,7 @@ import vitesseDark from 'shiki/themes/vitesse-dark.mjs'
 import vitesseLight from 'shiki/themes/vitesse-light.mjs'
 import { computed, ref } from 'vue'
 import NavBar from './components/NavBar.vue'
+import PageFooter from './components/PageFooter.vue'
 import Tabs from './components/Tabs.vue'
 import { dark } from './composables/dark'
 import { useEditor } from './composables/editor'
@@ -134,6 +135,7 @@ watchDebounced(files, () => compile(), {
 
     <div
       :class="loading && 'op0 invisible'"
+      min-h-0
       w-full
       flex
       flex-1
@@ -144,8 +146,10 @@ watchDebounced(files, () => compile(), {
       duration-500
       md:flex-row
     >
-      <Tabs v-model="active" :tabs h-full min-w-0 w-full flex-1>
-        <div ref="editorRef" h-full border rounded-lg p2 text-sm font-mono />
+      <Tabs v-model="active" :tabs h-full min-w-0 flex-1>
+        <div min-h-0 min-w-0 flex-1>
+          <div ref="editorRef" h-full w-full border />
+        </div>
       </Tabs>
 
       <div flex="~ col" h-full min-w-0 w-full flex-1 items-center gap2>
@@ -187,29 +191,7 @@ watchDebounced(files, () => compile(), {
       </div>
     </div>
 
-    <div flex="~" gap="1.2" mb6 mt4 items-center text-hex-888e>
-      Made with
-      <div i-ri:heart-3-line text-pink />
-      by
-      <a
-        href="https://github.com/sxzz"
-        target="_blank"
-        rel="noopener"
-        hover="underline"
-      >
-        Kevin Deng
-      </a>
-
-      <a
-        href="https://github.com/sxzz/typescript-go-playground"
-        target="_blank"
-        rel="noopener"
-        op50
-        hover:op100
-      >
-        <div i-ri-github-fill text-lg
-      /></a>
-    </div>
+    <PageFooter />
   </div>
 </template>
 

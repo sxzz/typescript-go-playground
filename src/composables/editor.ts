@@ -18,6 +18,9 @@ export function useEditor(
         model: modelValue,
         automaticLayout: true,
         theme: darkValue ? 'vs-dark' : 'vs-light',
+        minimap: {
+          enabled: false,
+        },
       })
     },
     { immediate: true },
