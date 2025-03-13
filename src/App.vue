@@ -63,7 +63,7 @@ const compiling = ref(false)
 const timeCost = ref(0)
 const error = ref<string>()
 const loading = ref(true)
-const editorRef = ref<HTMLElement | null>(null)
+const editorRef = ref<HTMLElement>()
 
 const worker = new Worker()
 const uiFunctions = {

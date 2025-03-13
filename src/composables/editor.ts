@@ -1,22 +1,19 @@
 import { editor } from 'monaco-editor'
-import { onUnmounted, shallowRef, watch, type Ref } from 'vue'
+import { onScopeDispose, shallowRef, watch, type Ref } from 'vue'
 
-export const useEditor = (
+export function useEditor(
   model: Ref<editor.ITextModel>,
-  dom: Ref<HTMLElement | null>,
+  dom: Ref<HTMLElement | undefined>,
   dark: Ref<boolean>,
-) => {
-  const editorInstance = shallowRef<editor.IStandaloneCodeEditor | null>(null)
+) {
+  const editorInstance = shallowRef<editor.IStandaloneCodeEditor>()
 
   watch(
     [dom, model, dark],
     ([domValue, modelValue, darkValue]) => {
-      if (!domValue) {
-        return
-      }
-      if (editorInstance.value) {
-        editorInstance.value.dispose()
-      }
+      if (!domValue) return
+
+      editorInstance.value?.dispose()
       editorInstance.value = editor.create(domValue, {
         model: modelValue,
         automaticLayout: true,
@@ -26,10 +23,8 @@ export const useEditor = (
     { immediate: true },
   )
 
-  onUnmounted(() => {
-    if (editorInstance.value) {
-      editorInstance.value.dispose()
-    }
+  onScopeDispose(() => {
+    editorInstance.value?.dispose()
   })
 
   return { editorInstance }
