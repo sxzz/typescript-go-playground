@@ -146,7 +146,7 @@ watchDebounced(files, () => compile(), {
       duration-500
       md:flex-row
     >
-      <Tabs v-model="active" :tabs h-full min-w-0 flex-1>
+      <Tabs v-model="active" :tabs h-full min-w-0 w-full flex-1>
         <div min-h-0 min-w-0 flex-1>
           <div ref="editorRef" h-full w-full border />
         </div>
