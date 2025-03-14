@@ -4,7 +4,7 @@ import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
 import { editor } from 'monaco-editor'
 import * as monaco from 'monaco-editor'
-import { computed, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, useTemplateRef } from 'vue'
 import NavBar from './components/NavBar.vue'
 import PageFooter from './components/PageFooter.vue'
 import Tabs from './components/Tabs.vue'
@@ -13,6 +13,7 @@ import { useEditor } from './composables/editor'
 import { shiki, themeDark, themeLight } from './composables/shiki'
 import {
   active,
+  compilerVersion,
   compiling,
   error,
   files,
@@ -105,6 +106,19 @@ const { copy, copied } = useClipboard()
 function handleCopy() {
   copy(outputFiles.value[outputActive.value])
 }
+
+onBeforeUnmount(() => {
+  tsModel.dispose()
+  tsconfigModel.dispose()
+})
+
+async function loadVersion() {
+  const pkg = await fetch(
+    'https://cdn.jsdelivr.net/npm/tsgo-wasm@latest/package.json',
+  ).then((r) => r.json())
+  compilerVersion.value = (pkg.version as string).replace('0.0.0-', '')
+}
+loadVersion()
 </script>
 
 <template>
@@ -119,25 +133,27 @@ function handleCopy() {
   >
     <NavBar absolute />
 
-    <h1
-      flex="~ wrap"
-      items-center
+    <div
+      flex="~ col"
       gap2
       py12
-      text-3xl
-      font-bold
       transition-all
       :class="loading && 'animate-pulse translate-y-35dvh'"
     >
-      <div i-catppuccin:typescript-test />
-      <a
-        href="https://github.com/microsoft/typescript-go"
-        target="_blank"
-        class="text-#8aadf4"
-        >TypeScript Go</a
-      >
-      Playground
-    </h1>
+      <h1 flex="~ wrap" items-center gap2 text-3xl font-bold>
+        <div i-catppuccin:typescript-test />
+        <a
+          href="https://github.com/microsoft/typescript-go"
+          target="_blank"
+          class="text-#8aadf4"
+          >TypeScript Go</a
+        >
+        Playground
+      </h1>
+      <div v-if="!loading && compilerVersion" self-end text-xs font-mono op70>
+        compiler v{{ compilerVersion }}
+      </div>
+    </div>
 
     <div
       :class="loading && 'op0 invisible'"

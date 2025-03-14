@@ -26,3 +26,5 @@ export const compiling = ref(false)
 export const timeCost = ref(0)
 export const error = ref<string>()
 export const loading = ref(true)
+
+export const compilerVersion = ref<string>()
