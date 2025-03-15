@@ -51,8 +51,8 @@ async function compile(
   const code = await promise
 
   const time = performance.now() - t
-  const stdout = (await wasmFs.getStdOut()) as string
-  const stderr = await wasmFs.fs.readFileSync(PATH_STDERR, 'utf8')
+  const stdout = ((await wasmFs.getStdOut()) as string).trim()
+  const stderr = await wasmFs.fs.readFileSync(PATH_STDERR, 'utf8').trim()
 
   if (code !== 0) {
     return {
