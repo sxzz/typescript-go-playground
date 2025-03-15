@@ -40,8 +40,8 @@ if (!state) {
   if (serialized) state = JSON.parse(serialized)
 }
 if (state) {
-  cmd.value = state.c
-  files.value = state.f
+  cmd.value = state.c || ''
+  files.value = state.f || DEFAULT_FILES
 }
 
 export const serialized = computed(() =>
