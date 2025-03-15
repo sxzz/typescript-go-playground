@@ -204,9 +204,10 @@ loadVersion()
           v-model="outputActive"
           :tabs="Object.keys(outputFiles)"
           h-full
+          min-h-0
           w-full
         >
-          <div group relative h-full w-full>
+          <div group relative h-full min-h-0 w-full>
             <div
               v-if="outputActive.startsWith('<')"
               class="output"
