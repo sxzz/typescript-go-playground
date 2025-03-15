@@ -23,12 +23,11 @@ export const tabs = computed(() => Object.keys(files.value))
 
 export const active = ref('main.ts')
 
-export const outputFiles = ref(Object.create(null))
+export const outputFiles = ref<Record<string, string | null>>({})
 export const outputActive = ref('main.js')
 
 export const compiling = ref(false)
 export const timeCost = ref(0)
-export const error = ref<string>()
 export const loading = ref(true)
 
 export const compilerVersion = ref<string>()

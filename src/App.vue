@@ -16,7 +16,6 @@ import {
   cmd,
   compilerVersion,
   compiling,
-  error,
   files,
   loading,
   outputActive,
@@ -87,16 +86,16 @@ async function compile() {
   const result = await rpc.compile(cmd.value, toRaw(files.value))
   compiling.value = false
 
-  error.value = result.error
   outputFiles.value = result.output
   timeCost.value = result.time
+  outputActive.value = Object.keys(result.output)[0]
 
   if (current !== serialized.value) {
     compile()
   }
 }
 
-function highlight(code?: string) {
+function highlight(code?: string | null) {
   if (!code) return ''
   return shiki.codeToHtml(code.replace(ansiRegex, ''), {
     lang: 'js',
@@ -106,7 +105,7 @@ function highlight(code?: string) {
 
 const { copy, copied } = useClipboard()
 function handleCopy() {
-  copy(outputFiles.value[outputActive.value])
+  copy(outputFiles.value[outputActive.value] || '')
 }
 
 onBeforeUnmount(() => {
@@ -200,14 +199,6 @@ loadVersion()
           Compiling...
         </div>
 
-        <div
-          v-else-if="error"
-          text-red
-          class="output"
-          mt="12.5"
-          v-text="error.replace(ansiRegex, '')"
-        />
-
         <Tabs
           v-else
           v-model="outputActive"
@@ -215,32 +206,38 @@ loadVersion()
           h-full
           w-full
         >
-          <template #default="{ value }">
-            <div group relative h-full w-full>
-              <div class="output" v-html="highlight(outputFiles[value])" />
-              <button
-                absolute
-                right-4
-                top-4
-                rounded-lg
-                p2
-                op0
-                transition-opacity
-                hover:bg-gray
-                hover:bg-opacity-10
-                group-hover:opacity-100
-                @click="handleCopy"
-              >
-                <div
-                  :class="
-                    copied
-                      ? 'i-ri:check-line text-green'
-                      : 'i-ri:file-copy-line'
-                  "
-                />
-              </button>
-            </div>
-          </template>
+          <div group relative h-full w-full>
+            <div
+              v-if="outputActive.startsWith('<')"
+              class="output"
+              :class="{ 'text-red': outputActive === '<stderr>' }"
+              v-text="outputFiles[outputActive]?.replace(ansiRegex, '')"
+            />
+            <div
+              v-else
+              class="output"
+              v-html="highlight(outputFiles[outputActive])"
+            />
+            <button
+              absolute
+              right-4
+              top-4
+              rounded-lg
+              p2
+              op0
+              transition-opacity
+              hover:bg-gray
+              hover:bg-opacity-10
+              group-hover:opacity-100
+              @click="handleCopy"
+            >
+              <div
+                :class="
+                  copied ? 'i-ri:check-line text-green' : 'i-ri:file-copy-line'
+                "
+              />
+            </button>
+          </div>
         </Tabs>
 
         <div v-if="timeCost && !compiling" self-end op70>

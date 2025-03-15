@@ -24,8 +24,7 @@ const rpc = createBirpc<UIFunctions, WorkerFunctions>(workerFunctions, {
 rpc.ready()
 
 export interface CompileResult {
-  output?: Record<string, string | null>
-  error?: string
+  output: Record<string, string | null>
   time: number
 }
 
@@ -52,7 +51,7 @@ async function compile(
   const code = await promise
 
   const time = performance.now() - t
-  const stdout = await wasmFs.getStdOut()
+  const stdout = (await wasmFs.getStdOut()) as string
   const stderr = await wasmFs.fs.readFileSync(PATH_STDERR, 'utf8')
 
   if (stdout) console.info(`[stdout]:\n${await wasmFs.getStdOut()}`)
@@ -60,13 +59,22 @@ async function compile(
 
   if (code !== 0) {
     return {
+      output: {
+        '<stdout>': stdout,
+        '<stderr>': `Exit code: ${code}\n\n${stderr}`.trim(),
+      },
       time,
-      error: `Exit code: ${code}\n${stdout}\n\n${stderr}`,
     }
   }
 
+  const output = {
+    ...wasmFs.volume.toJSON('/app/dist', undefined, true),
+  }
+  if (stdout) output['<stdout>'] = stdout
+  if (stderr) output['<stderr>'] = stderr
+
   return {
-    output: wasmFs.volume.toJSON('/app/dist', undefined, true),
+    output,
     time,
   }
 }
