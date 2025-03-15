@@ -4,7 +4,7 @@ import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
 import { editor } from 'monaco-editor'
 import * as monaco from 'monaco-editor'
-import { computed, onBeforeUnmount, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, toRaw, useTemplateRef } from 'vue'
 import NavBar from './components/NavBar.vue'
 import PageFooter from './components/PageFooter.vue'
 import Tabs from './components/Tabs.vue'
@@ -77,7 +77,7 @@ async function compile() {
 
   const currentFiles = JSON.stringify(files)
   compiling.value = true
-  const result = await rpc.compile(currentFiles)
+  const result = await rpc.compile(toRaw(files))
   compiling.value = false
 
   error.value = result.error

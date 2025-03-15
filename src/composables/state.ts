@@ -1,6 +1,6 @@
 import { computed, reactive, ref } from 'vue'
 
-export const files = reactive(Object.create(null))
+export const files = reactive<Record<string, string>>(Object.create(null))
 export const tabs = computed(() => Object.keys(files))
 
 files['main.ts'] = `const x: number = 1`

@@ -30,15 +30,10 @@ export interface CompileResult {
 
 const PATH_STDERR = '/dev/stderr'
 
-async function compile(
-  filesJSON: string,
-  // dark: boolean,
-): Promise<CompileResult> {
+async function compile(files: Record<string, string>): Promise<CompileResult> {
   const wasmFs = new WasmFs()
   // @ts-expect-error
   globalThis.fs = wasmFs.fs
-
-  const files = JSON.parse(filesJSON)
   wasmFs.volume.fromJSON(files, '/app')
 
   const t = performance.now()
