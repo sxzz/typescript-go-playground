@@ -13,6 +13,7 @@ import { useEditor } from './composables/editor'
 import { shiki, themeDark, themeLight } from './composables/shiki'
 import {
   active,
+  cmd,
   compilerVersion,
   compiling,
   error,
@@ -20,6 +21,7 @@ import {
   loading,
   outputActive,
   outputFiles,
+  serialized,
   tabs,
   timeCost,
 } from './composables/state'
@@ -72,19 +74,24 @@ const rpc = createBirpc<WorkerFunctions, UIFunctions>(uiFunctions, {
   on: (fn) => worker.addEventListener('message', ({ data }) => fn(data)),
 })
 
+watchDebounced([files, cmd], () => compile(), {
+  debounce: 200,
+  deep: true,
+})
+
 async function compile() {
   if (loading.value || compiling.value) return
 
-  const currentFiles = JSON.stringify(files.value)
+  const current = serialized.value
   compiling.value = true
-  const result = await rpc.compile(toRaw(files.value))
+  const result = await rpc.compile(cmd.value, toRaw(files.value))
   compiling.value = false
 
   error.value = result.error
   outputFiles.value = result.output
   timeCost.value = result.time
 
-  if (currentFiles !== JSON.stringify(files.value)) {
+  if (current !== serialized.value) {
     compile()
   }
 }
@@ -96,11 +103,6 @@ function highlight(code?: string) {
     theme: dark.value ? themeDark.name! : themeLight.name!,
   })
 }
-
-watchDebounced(files, () => compile(), {
-  debounce: 200,
-  deep: true,
-})
 
 const { copy, copied } = useClipboard()
 function handleCopy() {
@@ -172,6 +174,16 @@ loadVersion()
         <div min-h-0 min-w-0 flex-1>
           <div ref="editorRef" h-full w-full border />
         </div>
+        <input
+          v-model="cmd"
+          type="text"
+          placeholder="command"
+          border
+          rounded
+          p1
+          text-sm
+          font-mono
+        />
       </Tabs>
 
       <div flex="~ col" h-full min-w-0 w-full flex-1 items-center gap2>
@@ -231,12 +243,7 @@ loadVersion()
           </template>
         </Tabs>
 
-        <div
-          v-if="!compiling"
-          self-end
-          op70
-          :class="[timeCost && !compiling ? '' : 'invisible']"
-        >
+        <div v-if="timeCost && !compiling" self-end op70>
           {{ Math.round(timeCost) }} ms
         </div>
       </div>

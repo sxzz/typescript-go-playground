@@ -1,6 +1,7 @@
 import { computed, ref, watchEffect } from 'vue'
 import { atou, utoa } from './url'
 
+export const cmd = ref('tsc')
 const DEFAULT_FILES = {
   'main.ts': `const x: number = 1`,
   'tsconfig.json': JSON.stringify(
@@ -39,13 +40,17 @@ if (!state) {
   const serialized = localStorage.getItem(LAST_STATE_KEY)
   if (serialized) state = JSON.parse(serialized)
 }
-if (state) files.value = state.f
+if (state) {
+  cmd.value = state.c
+  files.value = state.f
+}
+
+export const serialized = computed(() =>
+  JSON.stringify({ f: files.value, c: cmd.value }),
+)
 
 // serialize state to url
 watchEffect(() => {
-  const serialized = JSON.stringify({
-    f: files.value,
-  })
-  location.hash = utoa(serialized)
-  localStorage.setItem(LAST_STATE_KEY, serialized)
+  location.hash = utoa(serialized.value)
+  localStorage.setItem(LAST_STATE_KEY, serialized.value)
 })

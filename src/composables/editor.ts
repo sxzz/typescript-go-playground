@@ -19,6 +19,7 @@ export function useEditor(
         automaticLayout: true,
         theme: dark.value ? 'vs-dark' : 'vs-light',
         minimap: { enabled: false },
+        fontSize: 13,
       })
     },
     { immediate: true },

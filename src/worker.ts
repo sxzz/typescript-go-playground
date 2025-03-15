@@ -1,4 +1,5 @@
 import { WasmFs } from '@wasmer/wasmfs'
+import { tokenizeArgs } from 'args-tokenizer'
 import { createBirpc } from 'birpc'
 
 import type { UIFunctions } from './App.vue'
@@ -30,17 +31,22 @@ export interface CompileResult {
 
 const PATH_STDERR = '/dev/stderr'
 
-async function compile(files: Record<string, string>): Promise<CompileResult> {
+async function compile(
+  cmd: string,
+  files: Record<string, string>,
+): Promise<CompileResult> {
   const wasmFs = new WasmFs()
   // @ts-expect-error
   globalThis.fs = wasmFs.fs
   wasmFs.volume.fromJSON(files, '/app')
 
+  const { promise, resolve } = Promise.withResolvers<number>()
+  const args = tokenizeArgs(cmd)
   const t = performance.now()
 
-  const { promise, resolve } = Promise.withResolvers<number>()
   go.exit = (code: number) => resolve(code)
-  go.argv = ['js', 'tsc']
+  go.argv = ['js', ...args]
+
   const instance = await WebAssembly.instantiate(wasmMod, go.importObject)
   await go.run(instance)
   const code = await promise

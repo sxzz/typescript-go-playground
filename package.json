@@ -13,6 +13,7 @@
     "@vueuse/core": "^13.0.0",
     "@wasmer/wasmfs": "^0.12.0",
     "ansi-regex": "^6.1.0",
+    "args-tokenizer": "^0.3.0",
     "birpc": "^2.2.0",
     "fflate": "^0.8.2",
     "monaco-editor": "^0.52.2",
