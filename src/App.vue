@@ -29,21 +29,21 @@ import type { WorkerFunctions } from './worker'
 const ansiRegex = AnsiRegex()
 
 const tsModel = editor.createModel(
-  files['main.ts'],
+  files.value['main.ts'],
   'typescript',
   monaco.Uri.parse('inmemory://model/main.ts'),
 )
 tsModel.onDidChangeContent(() => {
-  files['main.ts'] = tsModel.getValue()
+  files.value['main.ts'] = tsModel.getValue()
 })
 const tsconfigModel = editor.createModel(
-  files['tsconfig.json'],
+  files.value['tsconfig.json'],
   'json',
   monaco.Uri.parse('inmemory:///model/tsconfig.json'),
 )
 tsconfigModel.onDidChangeContent(() => {
   const value = tsconfigModel.getValue()
-  files['tsconfig.json'] = value
+  files.value['tsconfig.json'] = value
   try {
     const tsconfig = JSON.parse(value)
     monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
@@ -75,16 +75,16 @@ const rpc = createBirpc<WorkerFunctions, UIFunctions>(uiFunctions, {
 async function compile() {
   if (loading.value || compiling.value) return
 
-  const currentFiles = JSON.stringify(files)
+  const currentFiles = JSON.stringify(files.value)
   compiling.value = true
-  const result = await rpc.compile(toRaw(files))
+  const result = await rpc.compile(toRaw(files.value))
   compiling.value = false
 
   error.value = result.error
   outputFiles.value = result.output
   timeCost.value = result.time
 
-  if (currentFiles !== JSON.stringify(files)) {
+  if (currentFiles !== JSON.stringify(files.value)) {
     compile()
   }
 }
