@@ -30,7 +30,7 @@ export const compiling = ref(false)
 export const timeCost = ref(0)
 export const loading = ref(true)
 
-export const compilerVersion = ref<string>()
+export const compilerSha = ref<string>()
 
 const LAST_STATE_KEY = 'tsgo:state'
 const serializedUrl = atou(location.hash!.slice(1))

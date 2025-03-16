@@ -14,7 +14,7 @@ import { shiki, themeDark, themeLight } from './composables/shiki'
 import {
   active,
   cmd,
-  compilerVersion,
+  compilerSha,
   compiling,
   files,
   loading,
@@ -113,13 +113,13 @@ onBeforeUnmount(() => {
   tsconfigModel.dispose()
 })
 
-async function loadVersion() {
+async function loadGitSha() {
   const pkg = await fetch(
-    'https://cdn.jsdelivr.net/npm/tsgo-wasm@latest/package.json',
+    'https://cdn.jsdelivr.net/npm/tsgo-wasm/package.json',
   ).then((r) => r.json())
-  compilerVersion.value = (pkg.version as string).replace('0.0.0-', '')
+  compilerSha.value = pkg.buildInfo.commit as string
 }
-loadVersion()
+loadGitSha()
 </script>
 
 <template>
@@ -151,8 +151,16 @@ loadVersion()
         >
         Playground
       </h1>
-      <div v-if="!loading && compilerVersion" self-end text-xs font-mono op70>
-        compiler v{{ compilerVersion }}
+      <div v-if="!loading && compilerSha" self-end text-xs font-mono op70>
+        compiler
+        <a
+          :href="`https://github.com/microsoft/typescript-go/commit/${compilerSha}`"
+          target="_blank"
+          rel="noopener"
+          hover:underline
+        >
+          @{{ compilerSha.slice(0, 7) }}
+        </a>
       </div>
     </div>
 

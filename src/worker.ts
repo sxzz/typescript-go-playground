@@ -8,7 +8,7 @@ import type { UIFunctions } from './App.vue'
 const { Go } = await import('./wasm-exec.js')
 const go = new Go()
 
-const wasmUrl = 'https://cdn.jsdelivr.net/npm/tsgo-wasm@latest/tsgo.wasm'
+const wasmUrl = 'https://cdn.jsdelivr.net/npm/tsgo-wasm/tsgo.wasm'
 const wasmBuffer = await fetch(wasmUrl).then((r) => r.arrayBuffer())
 const wasmMod = await WebAssembly.compile(wasmBuffer)
 
