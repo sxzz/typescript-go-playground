@@ -151,7 +151,8 @@ loadGitSha()
         >
         Playground
       </h1>
-      <div v-if="!loading && compilerSha" self-end text-xs font-mono op70>
+      <div v-if="loading" self-end text-sm op70>Loading WASM...</div>
+      <div v-else-if="compilerSha" self-end text-xs font-mono op70>
         compiler
         <a
           :href="`https://github.com/microsoft/typescript-go/commit/${compilerSha}`"
