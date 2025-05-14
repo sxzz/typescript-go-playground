@@ -1,36 +1,51 @@
 import { computed, ref, watchEffect } from 'vue'
+import { useSourceFile, type SourceFileMap } from './source-file'
 import { atou, utoa } from './url'
 
-export const cmd = ref('tsc')
-const DEFAULT_FILES = {
-  'main.ts': `const x: number = 1`,
-  'tsconfig.json': JSON.stringify(
-    {
-      compilerOptions: {
-        target: 'esnext',
-        module: 'esnext',
-        strict: true,
-        esModuleInterop: true,
-        outDir: 'dist',
-      },
-    },
-    undefined,
-    2,
-  ),
-}
-export const files = ref<Record<string, string>>(DEFAULT_FILES)
-export const tabs = computed(() => Object.keys(files.value))
+export const cmd = ref('')
 
-export const active = ref('main.ts')
+export const defaultFiles = (): SourceFileMap =>
+  new Map([
+    ['main.tsx', useSourceFile('main.tsx', `const x: number = 1`)],
+    [
+      'tsconfig.json',
+      useSourceFile(
+        'tsconfig.json',
+        JSON.stringify(
+          {
+            compilerOptions: {
+              target: 'esnext',
+              module: 'esnext',
+              strict: true,
+              esModuleInterop: true,
+              outDir: 'dist',
+            },
+          },
+          undefined,
+          2,
+        ),
+      ),
+    ],
+  ])
+
+export const files = ref<SourceFileMap>(defaultFiles())
+export const tabs = computed(() => Array.from(files.value.keys()))
 
 export const outputFiles = ref<Record<string, string | null>>({})
-export const outputActive = ref('main.js')
+export const outputActive = ref<string | undefined>('main.jsx')
 
 export const compiling = ref(false)
 export const timeCost = ref(0)
 export const loading = ref(true)
 
 export const compilerSha = ref<string>()
+
+export function filesToObject() {
+  return Array.from(files.value.values()).map((file) => [
+    file.filename,
+    file.code,
+  ])
+}
 
 const LAST_STATE_KEY = 'tsgo:state'
 const serializedUrl = atou(location.hash!.slice(1))
@@ -41,11 +56,19 @@ if (!state) {
 }
 if (state) {
   cmd.value = state.c || ''
-  files.value = state.f || DEFAULT_FILES
+  files.value = new Map(
+    ((state?.f || []) as [string, string][]).map(([filename, code]) => [
+      filename,
+      useSourceFile(filename, code),
+    ]),
+  )
+  if (files.value.size === 0) {
+    files.value = new Map(defaultFiles())
+  }
 }
 
 export const serialized = computed(() =>
-  JSON.stringify({ f: files.value, c: cmd.value }),
+  JSON.stringify({ f: filesToObject(), c: cmd.value }),
 )
 
 // serialize state to url

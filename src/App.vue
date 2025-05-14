@@ -2,21 +2,19 @@
 import { useClipboard, watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
-import { editor } from 'monaco-editor'
-import * as monaco from 'monaco-editor'
-import { computed, onBeforeUnmount, toRaw, useTemplateRef } from 'vue'
+import CodeEditor from './components/CodeEditor.vue'
 import NavBar from './components/NavBar.vue'
 import PageFooter from './components/PageFooter.vue'
 import Tabs from './components/Tabs.vue'
 import { dark } from './composables/dark'
-import { useEditor } from './composables/editor'
 import { shiki, themeDark, themeLight } from './composables/shiki'
+import { useSourceFile } from './composables/source-file'
 import {
-  active,
   cmd,
   compilerSha,
   compiling,
   files,
+  filesToObject,
   loading,
   outputActive,
   outputFiles,
@@ -28,37 +26,6 @@ import Worker from './worker?worker'
 import type { WorkerFunctions } from './worker'
 
 const ansiRegex = AnsiRegex()
-
-const tsModel = editor.createModel(
-  files.value['main.ts'],
-  'typescript',
-  monaco.Uri.parse('inmemory://model/main.ts'),
-)
-tsModel.onDidChangeContent(() => {
-  files.value['main.ts'] = tsModel.getValue()
-})
-const tsconfigModel = editor.createModel(
-  files.value['tsconfig.json'],
-  'json',
-  monaco.Uri.parse('inmemory:///model/tsconfig.json'),
-)
-tsconfigModel.onDidChangeContent(() => {
-  const value = tsconfigModel.getValue()
-  files.value['tsconfig.json'] = value
-  try {
-    const tsconfig = JSON.parse(value)
-    monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
-      tsconfig.compilerOptions,
-    )
-  } catch {}
-})
-const editorRef = useTemplateRef('editorRef')
-
-const model = computed(() =>
-  active.value === 'main.ts' ? tsModel : tsconfigModel,
-)
-
-useEditor(model, editorRef, dark)
 
 const worker = new Worker()
 const uiFunctions = {
@@ -83,7 +50,10 @@ async function compile() {
 
   const current = serialized.value
   compiling.value = true
-  const result = await rpc.compile(cmd.value, toRaw(files.value))
+  const result = await rpc.compile(
+    cmd.value,
+    Object.fromEntries(filesToObject()),
+  )
   compiling.value = false
 
   outputFiles.value = result.output
@@ -105,13 +75,9 @@ function highlight(code?: string | null) {
 
 const { copy, copied } = useClipboard()
 function handleCopy() {
+  if (!outputActive.value) return
   copy(outputFiles.value[outputActive.value] || '')
 }
-
-onBeforeUnmount(() => {
-  tsModel.dispose()
-  tsconfigModel.dispose()
-})
 
 async function loadGitSha() {
   const pkg = await fetch(
@@ -120,6 +86,31 @@ async function loadGitSha() {
   compilerSha.value = pkg.buildInfo.commit as string
 }
 loadGitSha()
+
+function addTab(name: string) {
+  files.value.set(name, useSourceFile(name, ''))
+}
+
+function renameTab(oldName: string, newName: string) {
+  files.value = new Map(
+    Array.from(files.value.values()).map((file) => {
+      if (file.filename === oldName) {
+        file.rename(newName)
+        return [newName, file]
+      }
+      return [file.filename, file]
+    }),
+  )
+}
+
+function removeTab(name: string) {
+  files.value.get(name)?.dispose()
+  files.value.delete(name)
+}
+
+function updateCode(name: string, code: string) {
+  files.value.get(name)!.code = code
+}
 </script>
 
 <template>
@@ -178,10 +169,33 @@ loadGitSha()
       duration-500
       md:flex-row
     >
-      <Tabs v-model="active" :tabs h-full min-w-0 w-full flex-1>
-        <div min-h-0 min-w-0 flex-1>
-          <div ref="editorRef" h-full w-full border />
-        </div>
+      <div flex="~ col" h-full min-w-0 w-full flex-1 gap2>
+        <Tabs
+          :tabs
+          h-full
+          min-h-0
+          min-w-0
+          w-full
+          flex-1
+          @add-tab="addTab"
+          @rename-tab="renameTab"
+          @remove-tab="removeTab"
+        >
+          <template #default="{ value }">
+            <div min-h-0 min-w-0 flex-1>
+              <CodeEditor
+                :model-value="files.get(value)!.code"
+                :model="files.get(value)!.model"
+                :uri="files.get(value)!.uri"
+                input
+                h-full
+                min-h-0
+                w-full
+                @update:model-value="updateCode(value, $event)"
+              />
+            </div>
+          </template>
+        </Tabs>
         <input
           v-model="cmd"
           type="text"
@@ -192,7 +206,7 @@ loadGitSha()
           text-sm
           font-mono
         />
-      </Tabs>
+      </div>
 
       <div flex="~ col" h-full min-w-0 w-full flex-1 items-center gap2>
         <div
@@ -212,22 +226,25 @@ loadGitSha()
           v-else
           v-model="outputActive"
           :tabs="Object.keys(outputFiles)"
+          readonly
           h-full
           min-h-0
           w-full
         >
           <div group relative h-full min-h-0 w-full>
-            <div
-              v-if="outputActive.startsWith('<')"
-              class="output"
-              :class="{ 'text-red': outputActive === '<stderr>' }"
-              v-text="outputFiles[outputActive]?.replace(ansiRegex, '')"
-            />
-            <div
-              v-else
-              class="output"
-              v-html="highlight(outputFiles[outputActive])"
-            />
+            <template v-if="outputActive">
+              <div
+                v-if="outputActive.startsWith('<')"
+                class="output"
+                :class="{ 'text-red': outputActive === '<stderr>' }"
+                v-text="outputFiles[outputActive]?.replace(ansiRegex, '')"
+              />
+              <div
+                v-else
+                class="output"
+                v-html="highlight(outputFiles[outputActive])"
+              />
+            </template>
             <button
               absolute
               right-4

@@ -1,39 +1,15 @@
-import { editor } from 'monaco-editor'
-import { onScopeDispose, shallowRef, watch, type Ref } from 'vue'
+import { dark } from './dark'
+import type * as monaco from 'monaco-editor'
 
-export function useEditor(
-  model: Ref<editor.ITextModel>,
-  dom: Ref<HTMLElement | null>,
-  dark: Ref<boolean>,
-) {
-  const editorInstance = shallowRef<editor.IStandaloneCodeEditor>()
-
-  watch(
-    [dom, model],
-    ([domValue, modelValue]) => {
-      if (!domValue) return
-
-      editorInstance.value?.dispose()
-      editorInstance.value = editor.create(domValue, {
-        model: modelValue,
-        automaticLayout: true,
-        theme: dark.value ? 'vs-dark' : 'vs-light',
-        minimap: { enabled: false },
-        fontSize: 13,
-      })
+export function getSharedMonacoOptions(): monaco.editor.IStandaloneEditorConstructionOptions {
+  return {
+    automaticLayout: true,
+    theme: dark.value ? 'vs-dark' : 'vs-light',
+    fontFamily:
+      '"Cascadia Code", "Jetbrains Mono", "Fira Code", "Menlo", "Consolas", monospace',
+    tabSize: 2,
+    minimap: {
+      enabled: false,
     },
-    { immediate: true },
-  )
-
-  watch(dark, (darkValue) => {
-    editorInstance.value?.updateOptions({
-      theme: darkValue ? 'vs-dark' : 'vs-light',
-    })
-  })
-
-  onScopeDispose(() => {
-    editorInstance.value?.dispose()
-  })
-
-  return { editorInstance }
+  }
 }
