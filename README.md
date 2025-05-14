@@ -2,7 +2,7 @@
 
 This is a playground that allows you to experience [TypeScript 7](https://github.com/microsoft/typescript-go) online!
 
-Try it out at [tsgo.dev](https://tsgo.dev).
+Try it out at [tsgo.sxzz.dev](https://tsgo.sxzz.dev).
 
 ## WASM
 
