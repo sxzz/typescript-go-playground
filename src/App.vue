@@ -10,6 +10,7 @@ import { dark } from './composables/dark'
 import { shiki, themeDark, themeLight } from './composables/shiki'
 import { useSourceFile } from './composables/source-file'
 import {
+  activeFile,
   cmd,
   compilerSha,
   compiling,
@@ -171,6 +172,7 @@ function updateCode(name: string, code: string) {
     >
       <div flex="~ col" h-full min-w-0 w-full flex-1 gap2>
         <Tabs
+          v-model="activeFile"
           :tabs
           h-full
           min-h-0

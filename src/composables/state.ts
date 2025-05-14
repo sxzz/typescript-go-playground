@@ -26,6 +26,7 @@ export const defaultFiles = (): SourceFileMap =>
 export const cmd = ref('')
 export const files = ref<SourceFileMap>(defaultFiles())
 export const tabs = computed(() => Array.from(files.value.keys()))
+export const activeFile = ref<string>('main.ts')
 
 export const outputFiles = ref<Record<string, string | null>>({})
 export const outputActive = ref<string | undefined>('main.jsx')
