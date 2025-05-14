@@ -196,16 +196,18 @@ function updateCode(name: string, code: string) {
             </div>
           </template>
         </Tabs>
-        <input
-          v-model="cmd"
-          type="text"
-          placeholder="command"
-          border
-          rounded
-          p1
-          text-sm
-          font-mono
-        />
+        <div flex items-center gap2 text-sm font-mono>
+          <span>tsgo</span>
+          <input
+            v-model="cmd"
+            type="text"
+            placeholder="command, e.g -v"
+            flex-1
+            border
+            rounded
+            p1
+          />
+        </div>
       </div>
 
       <div flex="~ col" h-full min-w-0 w-full flex-1 items-center gap2>

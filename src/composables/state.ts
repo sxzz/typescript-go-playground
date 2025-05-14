@@ -2,32 +2,28 @@ import { computed, ref, watchEffect } from 'vue'
 import { useSourceFile, type SourceFileMap } from './source-file'
 import { atou, utoa } from './url'
 
-export const cmd = ref('')
-
+const DEFAULT_TSCONFIG = {
+  compilerOptions: {
+    target: 'esnext',
+    module: 'esnext',
+    strict: true,
+    esModuleInterop: true,
+    outDir: 'dist',
+  },
+}
 export const defaultFiles = (): SourceFileMap =>
   new Map([
-    ['main.tsx', useSourceFile('main.tsx', `const x: number = 1`)],
+    ['main.ts', useSourceFile('main.ts', `const x: number = 1`)],
     [
       'tsconfig.json',
       useSourceFile(
         'tsconfig.json',
-        JSON.stringify(
-          {
-            compilerOptions: {
-              target: 'esnext',
-              module: 'esnext',
-              strict: true,
-              esModuleInterop: true,
-              outDir: 'dist',
-            },
-          },
-          undefined,
-          2,
-        ),
+        JSON.stringify(DEFAULT_TSCONFIG, undefined, 2),
       ),
     ],
   ])
 
+export const cmd = ref('')
 export const files = ref<SourceFileMap>(defaultFiles())
 export const tabs = computed(() => Array.from(files.value.keys()))
 
