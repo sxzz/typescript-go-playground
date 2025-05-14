@@ -51,16 +51,18 @@ if (!state) {
   if (serialized) state = JSON.parse(serialized)
 }
 if (state) {
-  cmd.value = state.c || ''
-  files.value = new Map(
-    ((state?.f || []) as [string, string][]).map(([filename, code]) => [
-      filename,
-      useSourceFile(filename, code),
-    ]),
-  )
-  if (files.value.size === 0) {
-    files.value = new Map(defaultFiles())
-  }
+  try {
+    cmd.value = state.c || ''
+    files.value = new Map(
+      ((state?.f || []) as [string, string][]).map(([filename, code]) => [
+        filename,
+        useSourceFile(filename, code),
+      ]),
+    )
+    if (files.value.size === 0) {
+      files.value = new Map(defaultFiles())
+    }
+  } catch {}
 }
 
 export const serialized = computed(() =>
