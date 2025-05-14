@@ -2,6 +2,8 @@
 
 This is a playground that allows you to experience [TypeScript 7](https://github.com/microsoft/typescript-go) online!
 
+Try it out at [tsgo.dev](https://tsgo.dev).
+
 ## WASM
 
 The WASM file is built from [tsgo-wasm](http://npmjs.com/package/tsgo-wasm).
