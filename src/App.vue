@@ -199,7 +199,7 @@ function updateCode(name: string, code: string) {
           </template>
         </Tabs>
         <div flex items-center gap2 text-sm font-mono>
-          <span>tsgo</span>
+          <span>❯ tsgo</span>
           <input
             v-model="cmd"
             type="text"
