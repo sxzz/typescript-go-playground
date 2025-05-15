@@ -1,13 +1,11 @@
 import { WasmFs } from '@wasmer/wasmfs'
 import { tokenizeArgs } from 'args-tokenizer'
 import { createBirpc } from 'birpc'
-
+// @ts-expect-error
+import { Go } from './wasm-exec.js'
 import type { UIFunctions } from './App.vue'
 
-// @ts-expect-error
-const { Go } = await import('./wasm-exec.js')
 const go = new Go()
-
 const wasmUrl = 'https://cdn.jsdelivr.net/npm/tsgo-wasm/tsgo.wasm'
 const wasmBuffer = await fetch(wasmUrl).then((r) => r.arrayBuffer())
 const wasmMod = await WebAssembly.compile(wasmBuffer)
