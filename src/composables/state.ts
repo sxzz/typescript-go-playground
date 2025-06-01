@@ -9,6 +9,7 @@ const DEFAULT_TSCONFIG = {
     strict: true,
     esModuleInterop: true,
     outDir: 'dist',
+    declaration: true,
   },
 }
 export const defaultFiles = (): SourceFileMap =>
