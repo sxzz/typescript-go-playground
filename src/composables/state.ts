@@ -64,11 +64,16 @@ if (state) {
     if (files.value.size === 0) {
       files.value = new Map(defaultFiles())
     }
+    currentVersion.value = state.v || 'latest'
   } catch {}
 }
 
 export const serialized = computed(() =>
-  JSON.stringify({ f: filesToObject(), c: cmd.value }),
+  JSON.stringify({
+    f: filesToObject(),
+    c: cmd.value,
+    v: currentVersion.value,
+  }),
 )
 
 // serialize state to url
