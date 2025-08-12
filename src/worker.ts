@@ -6,9 +6,8 @@ import { Go } from './wasm-exec.js'
 import type { UIFunctions } from './App.vue'
 
 const go = new Go()
-const wasmUrl = 'https://cdn.jsdelivr.net/npm/tsgo-wasm/tsgo.wasm'
-const wasmBuffer = await fetch(wasmUrl).then((r) => r.arrayBuffer())
-const wasmMod = await WebAssembly.compile(wasmBuffer)
+
+const cache: Record<string, WebAssembly.Module> = {}
 
 const workerFunctions = {
   compile,
@@ -31,7 +30,16 @@ const PATH_STDERR = '/dev/stderr'
 async function compile(
   cmd: string,
   files: Record<string, string>,
+  currentVersion: string,
 ): Promise<CompileResult> {
+  let wasmMod: WebAssembly.Module | undefined = cache[currentVersion]
+  if (!wasmMod) {
+    const wasmUrl = `https://cdn.jsdelivr.net/npm/tsgo-wasm@${currentVersion}/tsgo.wasm`
+    const wasmBuffer = await fetch(wasmUrl).then((r) => r.arrayBuffer())
+    wasmMod = await WebAssembly.compile(wasmBuffer)
+    cache[currentVersion] = wasmMod
+  }
+
   const wasmFs = new WasmFs()
   // @ts-expect-error
   globalThis.fs = wasmFs.fs

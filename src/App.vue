@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useClipboard, watchDebounced } from '@vueuse/core'
+import { computedAsync, useClipboard, watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
 import CodeEditor from './components/CodeEditor.vue'
@@ -12,8 +12,8 @@ import { useSourceFile } from './composables/source-file'
 import {
   activeFile,
   cmd,
-  compilerSha,
   compiling,
+  currentVersion,
   files,
   filesToObject,
   loading,
@@ -23,10 +23,12 @@ import {
   tabs,
   timeCost,
 } from './composables/state'
+import { generateDates } from './composables/version'
 import Worker from './worker?worker'
 import type { WorkerFunctions } from './worker'
 
 const ansiRegex = AnsiRegex()
+const dates = generateDates()
 
 const worker = new Worker()
 const uiFunctions = {
@@ -41,7 +43,7 @@ const rpc = createBirpc<WorkerFunctions, UIFunctions>(uiFunctions, {
   on: (fn) => worker.addEventListener('message', ({ data }) => fn(data)),
 })
 
-watchDebounced([files, cmd], () => compile(), {
+watchDebounced([files, cmd, currentVersion], () => compile(), {
   debounce: 200,
   deep: true,
 })
@@ -54,6 +56,7 @@ async function compile() {
   const result = await rpc.compile(
     cmd.value,
     Object.fromEntries(filesToObject()),
+    currentVersion.value,
   )
   compiling.value = false
 
@@ -80,13 +83,13 @@ function handleCopy() {
   copy(outputFiles.value[outputActive.value] || '')
 }
 
-async function loadGitSha() {
-  const pkg = await fetch(
-    'https://cdn.jsdelivr.net/npm/tsgo-wasm/package.json',
-  ).then((r) => r.json())
-  compilerSha.value = pkg.buildInfo.commit as string
-}
-loadGitSha()
+const compilerSha = computedAsync(
+  () =>
+    fetch(`https://registry.npmjs.org/tsgo-wasm/${currentVersion.value}`)
+      .then((r) => r.json())
+      .then((pkg) => pkg.buildInfo.commit as string),
+  null,
+)
 
 function addTab(name: string) {
   files.value.set(name, useSourceFile(name, ''))
@@ -144,16 +147,25 @@ function updateCode(name: string, code: string) {
         Playground
       </h1>
       <div v-if="loading" self-end text-sm op70>Loading WASM...</div>
-      <div v-else-if="compilerSha" self-end text-xs font-mono op70>
+      <div self-end text-xs font-mono op70>
         compiler
         <a
+          v-if="compilerSha"
           :href="`https://github.com/microsoft/typescript-go/commit/${compilerSha}`"
           target="_blank"
           rel="noopener"
+          mr1
           hover:underline
         >
           @{{ compilerSha.slice(0, 7) }}
         </a>
+
+        <select v-model="currentVersion">
+          <option value="latest">Latest</option>
+          <option v-for="date of dates" :key="date" :value="date">
+            {{ date }}
+          </option>
+        </select>
       </div>
     </div>
 

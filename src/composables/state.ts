@@ -36,7 +36,7 @@ export const compiling = ref(false)
 export const timeCost = ref(0)
 export const loading = ref(true)
 
-export const compilerSha = ref<string>()
+export const currentVersion = ref('latest')
 
 export function filesToObject() {
   return Array.from(files.value.values()).map((file) => [
