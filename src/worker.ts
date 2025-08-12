@@ -3,22 +3,20 @@ import { tokenizeArgs } from 'args-tokenizer'
 import { createBirpc } from 'birpc'
 // @ts-expect-error
 import { Go } from './wasm-exec.js'
-import type { UIFunctions } from './App.vue'
 
 const go = new Go()
 
 const cache: Record<string, WebAssembly.Module> = {}
 
 const workerFunctions = {
+  init,
   compile,
 }
 export type WorkerFunctions = typeof workerFunctions
-const rpc = createBirpc<UIFunctions, WorkerFunctions>(workerFunctions, {
+createBirpc<{}, WorkerFunctions>(workerFunctions, {
   post: (data) => postMessage(data),
   on: (fn) => addEventListener('message', ({ data }) => fn(data)),
 })
-
-rpc.ready()
 
 export interface CompileResult {
   output: Record<string, string | null>
@@ -27,18 +25,27 @@ export interface CompileResult {
 
 const PATH_STDERR = '/dev/stderr'
 
+async function init(version: string) {
+  await loadWasm(version)
+}
+
+async function loadWasm(version: string) {
+  let wasmMod: WebAssembly.Module | undefined = cache[version]
+  if (!wasmMod) {
+    const wasmUrl = `https://cdn.jsdelivr.net/npm/tsgo-wasm@${version}/tsgo.wasm`
+    const wasmBuffer = await fetch(wasmUrl).then((r) => r.arrayBuffer())
+    wasmMod = await WebAssembly.compile(wasmBuffer)
+    cache[version] = wasmMod
+  }
+  return wasmMod
+}
+
 async function compile(
   cmd: string,
   files: Record<string, string>,
-  currentVersion: string,
+  version: string,
 ): Promise<CompileResult> {
-  let wasmMod: WebAssembly.Module | undefined = cache[currentVersion]
-  if (!wasmMod) {
-    const wasmUrl = `https://cdn.jsdelivr.net/npm/tsgo-wasm@${currentVersion}/tsgo.wasm`
-    const wasmBuffer = await fetch(wasmUrl).then((r) => r.arrayBuffer())
-    wasmMod = await WebAssembly.compile(wasmBuffer)
-    cache[currentVersion] = wasmMod
-  }
+  const wasmMod = await loadWasm(version)
 
   const wasmFs = new WasmFs()
   // @ts-expect-error

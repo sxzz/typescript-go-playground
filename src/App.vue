@@ -31,25 +31,29 @@ const ansiRegex = AnsiRegex()
 const dates = generateDates()
 
 const worker = new Worker()
-const uiFunctions = {
-  ready() {
-    loading.value = false
-    compile()
+const rpc = createBirpc<WorkerFunctions>(
+  {},
+  {
+    post: (data) => worker.postMessage(data),
+    on: (fn) => worker.addEventListener('message', ({ data }) => fn(data)),
   },
-}
-export type UIFunctions = typeof uiFunctions
-const rpc = createBirpc<WorkerFunctions, UIFunctions>(uiFunctions, {
-  post: (data) => worker.postMessage(data),
-  on: (fn) => worker.addEventListener('message', ({ data }) => fn(data)),
+)
+
+rpc.init(currentVersion.value).then(() => {
+  loading.value = false
 })
 
-watchDebounced([files, cmd, currentVersion], () => compile(), {
+watchDebounced([files, cmd, currentVersion, loading], () => compile(), {
   debounce: 200,
   deep: true,
 })
 
 async function compile() {
   if (loading.value || compiling.value) return
+
+  loading.value = true
+  await rpc.init(currentVersion.value)
+  loading.value = false
 
   const current = serialized.value
   compiling.value = true
