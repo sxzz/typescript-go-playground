@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { computedAsync, useClipboard, watchDebounced } from '@vueuse/core'
+import {
+  computedAsync,
+  refDebounced,
+  useClipboard,
+  watchDebounced,
+} from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
 import CodeEditor from './components/CodeEditor.vue'
@@ -47,6 +52,8 @@ watchDebounced([files, cmd, currentVersion, loading], () => compile(), {
   debounce: 200,
   deep: true,
 })
+
+const loadingDebounced = refDebounced(loading, 100)
 
 async function compile() {
   if (loading.value || compiling.value) return
@@ -129,7 +136,7 @@ function updateCode(name: string, code: string) {
     items-center
     px10
     pt4
-    :class="!loading && 'overflow-y-scroll'"
+    :class="!loadingDebounced && 'overflow-y-scroll'"
   >
     <NavBar absolute />
 
@@ -138,7 +145,7 @@ function updateCode(name: string, code: string) {
       gap2
       py12
       transition-all
-      :class="loading && 'animate-pulse translate-y-35dvh'"
+      :class="loadingDebounced && 'animate-pulse translate-y-35dvh'"
     >
       <h1 flex="~ wrap" items-center gap2 text-3xl font-bold>
         <div i-catppuccin:typescript-test />
@@ -150,7 +157,7 @@ function updateCode(name: string, code: string) {
         >
         Playground
       </h1>
-      <div v-if="loading" self-end text-sm op70>Loading WASM...</div>
+      <div v-if="loadingDebounced" self-end text-sm op70>Loading WASM...</div>
       <div self-end text-xs font-mono op70>
         compiler
         <a
@@ -174,7 +181,7 @@ function updateCode(name: string, code: string) {
     </div>
 
     <div
-      :class="loading && 'op0 invisible'"
+      :class="loadingDebounced && 'op0 invisible'"
       min-h-0
       w-full
       flex
