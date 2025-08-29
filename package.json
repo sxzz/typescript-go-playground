@@ -1,8 +1,20 @@
 {
   "name": "typescript-go-playground",
-  "version": "0.0.0",
   "private": true,
+  "packageManager": "pnpm@10.15.0",
+  "description": "TypeScript Go Playground",
   "type": "module",
+  "license": "MIT",
+  "homepage": "https://github.com/sxzz/typescript-go-playground#readme",
+  "bugs": {
+    "url": "https://github.com/sxzz/typescript-go-playground/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sxzz/typescript-go-playground.git"
+  },
+  "author": "Kevin Deng <sxzz@sxzz.moe>",
+  "funding": "https://github.com/sponsors/sxzz",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,32 +23,32 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@vueuse/core": "^13.2.0",
+    "@vueuse/core": "^13.8.0",
     "@wasmer/wasmfs": "^0.12.0",
-    "ansi-regex": "^6.1.0",
+    "ansi-regex": "^6.2.0",
     "args-tokenizer": "^0.3.0",
-    "birpc": "^2.3.0",
+    "birpc": "^2.5.0",
     "fflate": "^0.8.2",
     "monaco-editor": "^0.52.2",
-    "shiki": "^3.4.1",
-    "vue": "^3.5.13"
+    "shiki": "^3.12.0",
+    "vue": "^3.5.20"
   },
   "devDependencies": {
-    "@iconify-json/catppuccin": "^1.2.11",
-    "@iconify-json/logos": "^1.2.4",
+    "@iconify-json/catppuccin": "^1.2.16",
+    "@iconify-json/logos": "^1.2.9",
     "@iconify-json/ri": "^1.2.5",
-    "@sxzz/eslint-config": "^7.0.1",
-    "@sxzz/prettier-config": "^2.2.1",
-    "@unocss/eslint-plugin": "66.1.1",
-    "@unocss/reset": "66.1.1",
-    "@vitejs/plugin-vue": "^5.2.4",
-    "@vue/tsconfig": "^0.7.0",
-    "eslint": "^9.26.0",
-    "prettier": "^3.5.3",
-    "typescript": "~5.8.3",
-    "unocss": "^66.1.1",
+    "@sxzz/eslint-config": "^7.1.4",
+    "@sxzz/prettier-config": "^2.2.4",
+    "@unocss/eslint-plugin": "66.4.2",
+    "@unocss/reset": "66.4.2",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "eslint": "^9.34.0",
+    "prettier": "^3.6.2",
+    "typescript": "~5.9.2",
+    "unocss": "^66.4.2",
     "vite": "npm:rolldown-vite@latest",
-    "vue-tsc": "^2.2.10"
+    "vue-tsc": "^3.0.6"
   },
   "prettier": "@sxzz/prettier-config"
 }

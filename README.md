@@ -18,4 +18,4 @@ The WASM file is built from [tsgo-wasm](http://npmjs.com/package/tsgo-wasm).
 
 ## License
 
-[MIT](./LICENSE) License © 2025 [三咲智子 Kevin Deng](https://github.com/sxzz)
+[MIT](./LICENSE) License © 2025 [Kevin Deng](https://github.com/sxzz)
