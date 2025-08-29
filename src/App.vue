@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import {
-  computedAsync,
-  refDebounced,
-  useClipboard,
-  watchDebounced,
-} from '@vueuse/core'
+import { computedAsync, useClipboard, watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
 import CodeEditor from './components/CodeEditor.vue'
@@ -22,6 +17,7 @@ import {
   files,
   filesToObject,
   loading,
+  loadingDebounced,
   outputActive,
   outputFiles,
   serialized,
@@ -48,12 +44,14 @@ rpc.init(currentVersion.value).then(() => {
   loading.value = false
 })
 
-watchDebounced([files, cmd, currentVersion, loading], () => compile(), {
-  debounce: 200,
-  deep: true,
-})
-
-const loadingDebounced = refDebounced(loading, 100)
+watchDebounced(
+  [files, cmd, currentVersion, loadingDebounced],
+  () => compile(),
+  {
+    debounce: 200,
+    deep: true,
+  },
+)
 
 async function compile() {
   if (loading.value || compiling.value) return

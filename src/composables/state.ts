@@ -1,3 +1,4 @@
+import { refDebounced } from '@vueuse/core'
 import { computed, ref, watchEffect } from 'vue'
 import { useSourceFile, type SourceFileMap } from './source-file'
 import { atou, utoa } from './url'
@@ -35,6 +36,7 @@ export const outputActive = ref<string | undefined>('main.jsx')
 export const compiling = ref(false)
 export const timeCost = ref(0)
 export const loading = ref(true)
+export const loadingDebounced = refDebounced(loading, 100)
 
 export const currentVersion = ref('latest')
 
