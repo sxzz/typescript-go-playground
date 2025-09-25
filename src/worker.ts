@@ -6,8 +6,29 @@ import { createGzipDecoder, unpackTar } from 'modern-tar'
 import { Go } from './wasm-exec.js'
 
 const go = new Go()
-
 const cache: Record<string, WebAssembly.Module> = {}
+
+// @ts-expect-error ReadableStream.from is not supported widely
+ReadableStream.from ||= (iterable) => {
+  const iterator =
+    iterable[Symbol.asyncIterator]?.() ?? iterable[Symbol.iterator]?.()
+  if (!iterator) {
+    throw new TypeError('Object is not iterable')
+  }
+  return new ReadableStream({
+    async pull(controller) {
+      const result = await iterator.next()
+      if (result.done) {
+        controller.close()
+      } else {
+        controller.enqueue(result.value)
+      }
+    },
+    cancel() {
+      iterator.return?.()
+    },
+  })
+}
 
 const workerFunctions = {
   init,
@@ -27,28 +48,6 @@ export interface CompileResult {
 const PATH_STDERR = '/dev/stderr'
 
 async function init(manifest: Record<string, any>) {
-  // @ts-expect-error ReadableStream.from is not supported widely
-  ReadableStream.from ||= (iterable) => {
-    const iterator =
-      iterable[Symbol.asyncIterator]?.() ?? iterable[Symbol.iterator]?.()
-    if (!iterator) {
-      throw new TypeError('Object is not iterable')
-    }
-    return new ReadableStream({
-      async pull(controller) {
-        const result = await iterator.next()
-        if (result.done) {
-          controller.close()
-        } else {
-          controller.enqueue(result.value)
-        }
-      },
-      cancel() {
-        iterator.return?.()
-      },
-    })
-  }
-
   await loadWasm(manifest)
 }
 
