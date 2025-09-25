@@ -26,6 +26,9 @@ importers:
       fflate:
         specifier: ^0.8.2
         version: 0.8.2
+      modern-tar:
+        specifier: ^0.2.1
+        version: 0.2.1
       monaco-editor:
         specifier: ^0.52.2
         version: 0.52.2
@@ -1978,6 +1981,10 @@ packages:
 
   mlly@1.8.0:
     resolution: {integrity: sha512-l8D9ODSRWLe2KHJSifWGwBqpTZXIXTeo8mlKjY+E2HAakaTeNpqAyBZ8GSqLzHgw4XmHmC8whvpjJNMbFZN7/g==}
+
+  modern-tar@0.2.1:
+    resolution: {integrity: sha512-0NnAzXp/ONtJvvO+5jnnSELnVTjtY8RD4D15o5W81AYAPiN7sNicKG03eNp6OyzaG0ULIUHfrjW7zRr86RfjhA==}
+    engines: {node: '>=18.0.0'}
 
   monaco-editor@0.52.2:
     resolution: {integrity: sha512-GEQWEZmfkOGLdd3XK8ryrfWz3AIP8YymVXiPHEdewrUq7mh0qrKrfHLNCXcbB6sTnMLnOZ3ztSiKcciFUkIJwQ==}
@@ -4634,6 +4641,8 @@ snapshots:
       pathe: 2.0.3
       pkg-types: 1.3.1
       ufo: 1.6.1
+
+  modern-tar@0.2.1: {}
 
   monaco-editor@0.52.2: {}
 

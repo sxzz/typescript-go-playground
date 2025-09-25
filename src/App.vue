@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computedAsync, useClipboard, watchDebounced } from '@vueuse/core'
+import { useClipboard, watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { createBirpc } from 'birpc'
+import { watch } from 'vue'
 import CodeEditor from './components/CodeEditor.vue'
 import NavBar from './components/NavBar.vue'
 import PageFooter from './components/PageFooter.vue'
@@ -12,12 +13,16 @@ import { useSourceFile } from './composables/source-file'
 import {
   activeFile,
   cmd,
+  compilerSha,
   compiling,
+  currentManifest,
   currentVersion,
   files,
   filesToObject,
-  loading,
+  firstWasmLoaded,
+  isFetchingManifest,
   loadingDebounced,
+  loadingWasm,
   outputActive,
   outputFiles,
   serialized,
@@ -40,32 +45,33 @@ const rpc = createBirpc<WorkerFunctions>(
   },
 )
 
-rpc.init(currentVersion.value).then(() => {
-  loading.value = false
+watchDebounced([files, cmd], () => compile(), {
+  debounce: 200,
+  deep: true,
+  immediate: true,
 })
-
-watchDebounced(
-  [files, cmd, currentVersion, loadingDebounced],
-  () => compile(),
-  {
-    debounce: 200,
-    deep: true,
-  },
-)
+watch(isFetchingManifest, () => compile())
 
 async function compile() {
-  if (loading.value || compiling.value) return
+  if (
+    loadingWasm.value ||
+    compiling.value ||
+    !currentManifest.value ||
+    isFetchingManifest.value
+  )
+    return
 
-  loading.value = true
-  await rpc.init(currentVersion.value)
-  loading.value = false
+  loadingWasm.value = true
+  await rpc.init(currentManifest.value)
+  loadingWasm.value = false
+  firstWasmLoaded.value = true
 
   const current = serialized.value
   compiling.value = true
   const result = await rpc.compile(
     cmd.value,
     Object.fromEntries(filesToObject()),
-    currentVersion.value,
+    currentManifest.value,
   )
   compiling.value = false
 
@@ -91,14 +97,6 @@ function handleCopy() {
   if (!outputActive.value) return
   copy(outputFiles.value[outputActive.value] || '')
 }
-
-const compilerSha = computedAsync(
-  () =>
-    fetch(`https://registry.npmjs.org/tsgo-wasm/${currentVersion.value}`)
-      .then((r) => r.json())
-      .then((pkg) => pkg.buildInfo.commit as string),
-  null,
-)
 
 function addTab(name: string) {
   files.value.set(name, useSourceFile(name, ''))
@@ -155,7 +153,10 @@ function updateCode(name: string, code: string) {
         >
         Playground
       </h1>
-      <div v-if="loadingDebounced" self-end text-sm op70>Loading WASM...</div>
+      <div v-if="loadingDebounced" self-end text-sm op70>
+        Loading
+        <a :href="currentManifest?.dist.tarball || ''">WASM</a>...
+      </div>
       <div self-end text-xs font-mono op70>
         compiler
         <a
