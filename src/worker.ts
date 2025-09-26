@@ -8,28 +8,6 @@ import { Go } from './wasm-exec.js'
 const go = new Go()
 const cache: Record<string, WebAssembly.Module> = {}
 
-// @ts-expect-error ReadableStream.from is not supported widely
-ReadableStream.from ||= (iterable) => {
-  const iterator =
-    iterable[Symbol.asyncIterator]?.() ?? iterable[Symbol.iterator]?.()
-  if (!iterator) {
-    throw new TypeError('Object is not iterable')
-  }
-  return new ReadableStream({
-    async pull(controller) {
-      const result = await iterator.next()
-      if (result.done) {
-        controller.close()
-      } else {
-        controller.enqueue(result.value)
-      }
-    },
-    cancel() {
-      iterator.return?.()
-    },
-  })
-}
-
 const workerFunctions = {
   init,
   compile,
@@ -61,15 +39,14 @@ async function loadWasm(manifest: Record<string, any>) {
     if (!response.body) throw new Error('No response body')
 
     const tarStream = response.body.pipeThrough(createGzipDecoder())
-    const tarBuffer = await new Response(tarStream).arrayBuffer()
-    const [wasmFile] = await unpackTar(tarBuffer, {
+    const [wasmFile] = await unpackTar(tarStream, {
       strip: 1,
       filter: (header) => header.name === 'tsgo.wasm',
     })
     if (!wasmFile) {
       throw new Error('No wasm file found in the package')
     }
-    wasmMod = await WebAssembly.compile(wasmFile.data.buffer as ArrayBuffer)
+    wasmMod = await WebAssembly.compile(wasmFile.data.buffer)
     cache[version] = wasmMod
   }
   return wasmMod
