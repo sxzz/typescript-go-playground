@@ -88,6 +88,7 @@ if (state) {
     if (files.value.size === 0) {
       files.value = new Map(defaultFiles())
     }
+    activeFile.value = files.value.keys().next().value!
     currentVersion.value = state.v || 'latest'
   } catch {}
 }
