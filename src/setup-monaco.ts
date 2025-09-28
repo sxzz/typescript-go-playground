@@ -13,6 +13,7 @@ monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
   noEmit: true,
   esModuleInterop: true,
   jsx: monaco.languages.typescript.JsxEmit.Preserve,
+  resolveJsonModule: true,
 })
 
 monaco.editor.registerEditorOpener({
