@@ -16,6 +16,17 @@ monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
   resolveJsonModule: true,
 })
 
+monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+  schemaValidation: 'warning',
+  enableSchemaRequest: true,
+  schemas: [
+    {
+      fileMatch: ['tsconfig.json'],
+      uri: 'https://www.schemastore.org/tsconfig.json',
+    },
+  ],
+})
+
 monaco.editor.registerEditorOpener({
   openCodeEditor(_, resource) {
     if (resource.scheme !== 'file' || resource.path[0] !== '/') {
