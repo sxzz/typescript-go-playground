@@ -27,8 +27,8 @@ importers:
         specifier: ^0.8.2
         version: 0.8.2
       modern-tar:
-        specifier: ^0.7.2
-        version: 0.7.2
+        specifier: ^0.6.1
+        version: 0.6.1
       monaco-editor:
         specifier: ^0.55.1
         version: 0.55.1
@@ -1814,8 +1814,8 @@ packages:
   mlly@1.8.0:
     resolution: {integrity: sha512-l8D9ODSRWLe2KHJSifWGwBqpTZXIXTeo8mlKjY+E2HAakaTeNpqAyBZ8GSqLzHgw4XmHmC8whvpjJNMbFZN7/g==}
 
-  modern-tar@0.7.2:
-    resolution: {integrity: sha512-TGG1ZRk1TAQ3neuZwahAHke3rKsSlro+ooMYtjh9sl2gGPVMLMuWiHgwC7im9T5bSM566RSo2Dko56ETgEvZcA==}
+  modern-tar@0.6.1:
+    resolution: {integrity: sha512-PS5kTfMLBrIP7X7dj3x+N17T1Fc2InnFJAe/pGleM0hT9GhDFkltsLYxB1eQisg55bjnvgLsbTRFYp47AUhcbg==}
     engines: {node: '>=18.0.0'}
 
   monaco-editor@0.55.1:
@@ -4324,7 +4324,7 @@ snapshots:
       pkg-types: 1.3.1
       ufo: 1.6.1
 
-  modern-tar@0.7.2: {}
+  modern-tar@0.6.1: {}
 
   monaco-editor@0.55.1:
     dependencies:

@@ -46,7 +46,7 @@ async function loadWasm(manifest: Record<string, any>) {
     if (!wasmFile) {
       throw new Error('No wasm file found in the package')
     }
-    wasmMod = await WebAssembly.compile(wasmFile.data.buffer)
+    wasmMod = await WebAssembly.compile(wasmFile.data!.buffer as any)
     cache[version] = wasmMod
   }
   return wasmMod
