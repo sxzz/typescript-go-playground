@@ -41,7 +41,7 @@ monaco.editor.registerEditorOpener({
   },
 })
 
-self.MonacoEnvironment = {
+globalThis.MonacoEnvironment = {
   getWorker(_: any, label: string) {
     if (label === 'json') {
       return new jsonWorker()

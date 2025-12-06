@@ -6,7 +6,7 @@ import { cmd, defaultFiles, files } from '../composables/state'
 function reset() {
   if (
     // eslint-disable-next-line no-alert
-    window.confirm(
+    globalThis.confirm(
       'Are you sure you want to reset all files and commands to their default values?',
     )
   ) {
