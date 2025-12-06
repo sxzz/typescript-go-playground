@@ -7,11 +7,11 @@ export default defineConfig({
   build: {
     rolldownOptions: {
       output: {
-        inlineDynamicImports: true,
         advancedChunks: {
           groups: [
             { name: 'monaco-editor', test: /monaco-editor/ },
             { name: 'shiki', test: /shiki/ },
+            { name: 'vue', test: /node_modules[\\/]@?vue[/\\]/ },
             { name: 'deps', test: /node_modules/ },
           ],
         },
