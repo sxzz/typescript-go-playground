@@ -29,7 +29,7 @@
     "args-tokenizer": "^0.3.0",
     "birpc": "^4.0.0",
     "fflate": "^0.8.2",
-    "modern-tar": "https://pkg.pr.new/ayuhito/modern-tar@111",
+    "modern-tar": "^0.7.3",
     "monaco-editor": "^0.55.1",
     "shiki": "^3.20.0",
     "vue": "^3.5.25"

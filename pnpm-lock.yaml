@@ -27,8 +27,8 @@ importers:
         specifier: ^0.8.2
         version: 0.8.2
       modern-tar:
-        specifier: https://pkg.pr.new/ayuhito/modern-tar@111
-        version: https://pkg.pr.new/ayuhito/modern-tar@111
+        specifier: ^0.7.3
+        version: 0.7.3
       monaco-editor:
         specifier: ^0.55.1
         version: 0.55.1
@@ -1688,9 +1688,8 @@ packages:
   mlly@1.8.0:
     resolution: {integrity: sha512-l8D9ODSRWLe2KHJSifWGwBqpTZXIXTeo8mlKjY+E2HAakaTeNpqAyBZ8GSqLzHgw4XmHmC8whvpjJNMbFZN7/g==}
 
-  modern-tar@https://pkg.pr.new/ayuhito/modern-tar@111:
-    resolution: {integrity: sha512-+MIQVfWDA9qHJSr/f6tu4TlMgt9EmVU1k+5MDRPYfmjU3ngUYLVmsCjnYpJ18lGu+0b6dWU+HTyEnVb5c4tU3Q==, tarball: https://pkg.pr.new/ayuhito/modern-tar@111}
-    version: 0.7.2
+  modern-tar@0.7.3:
+    resolution: {integrity: sha512-4W79zekKGyYU4JXVmB78DOscMFaJth2gGhgfTl2alWE4rNe3nf4N2pqenQ0rEtIewrnD79M687Ouba3YGTLOvg==}
     engines: {node: '>=18.0.0'}
 
   monaco-editor@0.55.1:
@@ -4088,7 +4087,7 @@ snapshots:
       pkg-types: 1.3.1
       ufo: 1.6.1
 
-  modern-tar@https://pkg.pr.new/ayuhito/modern-tar@111: {}
+  modern-tar@0.7.3: {}
 
   monaco-editor@0.55.1:
     dependencies:
