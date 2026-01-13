@@ -43,10 +43,10 @@ async function loadWasm(manifest: Record<string, any>) {
       strip: 1,
       filter: (header) => header.name === 'tsgo.wasm',
     })
-    if (!wasmFile) {
-      throw new Error('No wasm file found in the package')
+    if (!wasmFile?.data) {
+      throw new Error('tsgo.wasm not found in package')
     }
-    wasmMod = await WebAssembly.compile(wasmFile.data!.buffer as any)
+    wasmMod = await WebAssembly.compile(wasmFile.data.buffer as ArrayBuffer)
     cache[version] = wasmMod
   }
   return wasmMod
