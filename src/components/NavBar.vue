@@ -1,7 +1,14 @@
 <script setup lang="ts">
+import { useClipboard } from '@vueuse/core'
 import * as monaco from 'monaco-editor'
 import { dark } from '../composables/dark'
 import { cmd, defaultFiles, files } from '../composables/state'
+
+const { copy, copied } = useClipboard({ copiedDuring: 2000 })
+
+function share() {
+  copy(location.href)
+}
 
 function reset() {
   if (
@@ -22,6 +29,13 @@ function reset() {
 
 <template>
   <div flex self-end gap1 border rounded-full>
+    <button title="Share" nav-button @click="share">
+      <div
+        :class="copied ? 'i-ri:check-line text-green' : 'i-ri:share-line'"
+        text-2xl
+      />
+    </button>
+
     <button title="Start Over" nav-button @click="reset">
       <div i-ri:refresh-line text-2xl />
     </button>
