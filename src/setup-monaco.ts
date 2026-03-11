@@ -4,19 +4,19 @@ import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 import { activeFile, files } from './composables/state'
 
-monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-  target: monaco.languages.typescript.ScriptTarget.ESNext,
-  module: monaco.languages.typescript.ModuleKind.ESNext,
+monaco.typescript.typescriptDefaults.setCompilerOptions({
+  target: monaco.typescript.ScriptTarget.ESNext,
+  module: monaco.typescript.ModuleKind.ESNext,
   allowNonTsExtensions: true,
   allowImportingTsExtensions: true,
-  moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+  moduleResolution: monaco.typescript.ModuleResolutionKind.NodeJs,
   noEmit: true,
   esModuleInterop: true,
-  jsx: monaco.languages.typescript.JsxEmit.Preserve,
+  jsx: monaco.typescript.JsxEmit.Preserve,
   resolveJsonModule: true,
 })
 
-monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+monaco.json.jsonDefaults.setDiagnosticsOptions({
   schemaValidation: 'warning',
   enableSchemaRequest: true,
   schemas: [
