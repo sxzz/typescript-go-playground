@@ -27,6 +27,7 @@ export const defaultFiles = (): SourceFileMap =>
   ])
 
 export const cmd = ref('')
+export const watchMode = ref(false)
 export const files = ref<SourceFileMap>(defaultFiles())
 export const tabs = computed(() => Array.from(files.value.keys()))
 export const activeFile = ref<string>('main.ts')
@@ -52,10 +53,10 @@ export const { data: currentManifest, isFetching: isFetchingManifest } =
 export const compiling = ref(false)
 export const timeCost = ref(0)
 export const loadingWasm = ref(false)
-export const firstWasmLoaded = ref(false)
+export const initted = ref(false)
 
 export const loading = computed(
-  () => isFetchingManifest.value || loadingWasm.value || !firstWasmLoaded.value,
+  () => isFetchingManifest.value || loadingWasm.value || !initted.value,
 )
 export const loadingDebounced = refDebounced(loading, 100)
 
@@ -91,6 +92,7 @@ if (state) {
     }
     activeFile.value = files.value.keys().next().value!
     currentVersion.value = state.v || 'latest'
+    watchMode.value = state.w || false
   } catch {}
 }
 
@@ -99,6 +101,7 @@ export const serialized = computed(() =>
     f: filesToObject(),
     c: cmd.value,
     v: currentVersion.value,
+    w: watchMode.value,
   }),
 )
 

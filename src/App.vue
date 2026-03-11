@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useClipboard, watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
-import { createBirpc } from 'birpc'
 import { watch } from 'vue'
 import CodeEditor from './components/CodeEditor.vue'
 import NavBar from './components/NavBar.vue'
@@ -19,7 +18,7 @@ import {
   currentVersion,
   files,
   filesToObject,
-  firstWasmLoaded,
+  initted,
   isFetchingManifest,
   loadingDebounced,
   loadingWasm,
@@ -28,24 +27,22 @@ import {
   serialized,
   tabs,
   timeCost,
+  watchMode,
 } from './composables/state'
 import { generateDates } from './composables/version'
-import Worker from './worker?worker'
-import type { WorkerFunctions } from './worker'
+import {
+  createTsgoCli,
+  getWorker,
+  loadWasm,
+  releaseWorker,
+  terminateWorkers,
+  wasmModCache,
+} from './core'
 
 const ansiRegex = AnsiRegex()
 const dates = generateDates()
 
-const worker = new Worker()
-const rpc = createBirpc<WorkerFunctions>(
-  {},
-  {
-    post: (data) => worker.postMessage(data),
-    on: (fn) => worker.addEventListener('message', ({ data }) => fn(data)),
-  },
-)
-
-watchDebounced([files, cmd], () => compile(), {
+watchDebounced([files, cmd, watchMode], () => compile(), {
   debounce: 200,
   deep: true,
   immediate: true,
@@ -53,35 +50,60 @@ watchDebounced([files, cmd], () => compile(), {
 watch(isFetchingManifest, () => compile())
 
 async function compile() {
-  if (
-    loadingWasm.value ||
-    compiling.value ||
-    !currentManifest.value ||
-    isFetchingManifest.value
-  )
+  if (loadingWasm.value || !currentManifest.value || isFetchingManifest.value)
     return
 
-  loadingWasm.value = true
-  await rpc.init(currentManifest.value)
-  loadingWasm.value = false
-  firstWasmLoaded.value = true
+  if (watchMode.value && compiling.value) {
+    return
+  }
 
   const current = serialized.value
-  compiling.value = true
-  const result = await rpc.compile(
-    cmd.value,
-    Object.fromEntries(filesToObject()),
-    currentManifest.value,
-  )
-  compiling.value = false
+  const currentVersion: string = currentManifest.value.version
 
+  let wasmMod = wasmModCache[currentVersion]
+  if (!wasmMod) {
+    loadingWasm.value = true
+    wasmMod = await loadWasm(currentManifest.value).finally(() => {
+      initted.value = true
+    })
+  }
+
+  if (current !== serialized.value) return
+  loadingWasm.value = false
+  compiling.value = true
+
+  terminateWorkers()
+
+  const worker = getWorker()
+  const cli = createTsgoCli(worker, (files) => {
+    outputFiles.value = files
+  })
+
+  if (watchMode.value) {
+    const stop = watch(
+      files,
+      () => cli.setSourceCode(Object.fromEntries(filesToObject())),
+      { deep: true },
+    )
+
+    await cli
+      .watch(wasmMod, cmd.value, Object.fromEntries(filesToObject()))
+      .finally(() => {
+        releaseWorker(worker, cli)
+        stop()
+      })
+    return
+  }
+
+  const result = await cli
+    .compile(wasmMod, cmd.value, Object.fromEntries(filesToObject()))
+    .finally(() => releaseWorker(worker, cli))
+  if (current !== serialized.value) return
+
+  compiling.value = false
   outputFiles.value = result.output
   timeCost.value = result.time
   outputActive.value = Object.keys(result.output)[0]
-
-  if (current !== serialized.value) {
-    compile()
-  }
 }
 
 function highlight(code?: string | null) {
@@ -222,6 +244,7 @@ function updateCode(name: string, code: string) {
         </Tabs>
         <div flex items-center gap2 text-sm font-mono>
           <span>❯ tsgo</span>
+          <span v-if="watchMode"> -w</span>
           <input
             v-model="cmd"
             type="text"
@@ -231,12 +254,13 @@ function updateCode(name: string, code: string) {
             rounded
             p1
           />
+          <label> <input v-model="watchMode" type="checkbox" /> watch</label>
         </div>
       </div>
 
       <div flex="~ col" h-full min-w-0 w-full flex-1 items-center gap2>
         <div
-          v-if="compiling"
+          v-if="compiling && !watchMode"
           flex="~ col"
           h-full
           w-full

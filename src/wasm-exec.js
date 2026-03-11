@@ -162,7 +162,10 @@ export class Go {
           const fd = getInt64(sp + 8)
           const p = getInt64(sp + 16)
           const n = this.mem.getInt32(sp + 24, true)
-          fs.writeSync(fd, new Uint8Array(this._inst.exports.mem.buffer, p, n))
+          this.fs.writeSync(
+            fd,
+            new Uint8Array(this._inst.exports.mem.buffer, p, n),
+          )
         },
 
         // func resetMemoryDataView()
