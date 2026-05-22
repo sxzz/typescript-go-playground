@@ -7,7 +7,7 @@ export default defineConfig({
   build: {
     rolldownOptions: {
       output: {
-        advancedChunks: {
+        codeSplitting: {
           groups: [
             { name: 'monaco-editor', test: /monaco-editor/ },
             { name: 'shiki', test: /shiki/ },
