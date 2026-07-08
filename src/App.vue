@@ -254,7 +254,7 @@ function updateCode(name: string, code: string) {
             rounded
             p1
           />
-          <label> <input v-model="watchMode" type="checkbox" /> watch</label>
+          <!-- <label> <input v-model="watchMode" type="checkbox" /> watch</label> -->
         </div>
       </div>
 

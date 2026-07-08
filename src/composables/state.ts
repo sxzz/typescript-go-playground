@@ -92,7 +92,7 @@ if (state) {
     }
     activeFile.value = files.value.keys().next().value!
     currentVersion.value = state.v || 'latest'
-    watchMode.value = state.w || false
+    // watchMode.value = state.w || false
   } catch {}
 }
 
