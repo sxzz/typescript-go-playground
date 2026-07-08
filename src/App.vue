@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useClipboard, watchDebounced } from '@vueuse/core'
+import { useClipboard, useFetch, watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 import CodeEditor from './components/CodeEditor.vue'
 import NavBar from './components/NavBar.vue'
 import PageFooter from './components/PageFooter.vue'
@@ -38,6 +38,15 @@ import {
   terminateWorkers,
   wasmModCache,
 } from './core'
+
+const { data: pkgMeta } = useFetch(
+  'https://data.jsdelivr.com/v1/package/npm/tsgo-wasm',
+).json()
+
+const versions = computed(() => {
+  if (!pkgMeta.value) return null
+  return pkgMeta.value.versions.filter((v: string) => v.startsWith('7.'))
+})
 
 const ansiRegex = AnsiRegex()
 const dates = generateDates()
@@ -193,10 +202,18 @@ function updateCode(name: string, code: string) {
         </a>
 
         <select v-model="currentVersion">
-          <option value="latest">Latest</option>
-          <option v-for="date of dates" :key="date" :value="date">
-            {{ date }}
-          </option>
+          <optgroup v-if="versions" label="Stable Versions">
+            <option value="latest">Latest</option>
+            <option v-for="version of versions" :key="version" :value="version">
+              {{ version }}
+            </option>
+          </optgroup>
+
+          <optgroup label="Nightly Builds">
+            <option v-for="date of dates" :key="date" :value="date">
+              {{ date }}
+            </option>
+          </optgroup>
         </select>
       </div>
     </div>
