@@ -210,6 +210,7 @@ function updateCode(name: string, code: string) {
           </optgroup>
 
           <optgroup label="Nightly Builds">
+            <option value="nightly">Latest Nightly</option>
             <option v-for="date of dates" :key="date" :value="date">
               {{ date }}
             </option>
