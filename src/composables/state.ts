@@ -60,8 +60,14 @@ export const loading = computed(
 )
 export const loadingDebounced = refDebounced(loading, 100)
 
-export const compilerSha = computed(
-  () => currentManifest.value?.buildInfo.commit as string,
+export interface BuildInfo {
+  date: string
+  repo?: string
+  commit: string
+}
+
+export const buildInfo = computed(
+  () => currentManifest.value?.buildInfo as BuildInfo | undefined,
 )
 
 export function filesToObject() {

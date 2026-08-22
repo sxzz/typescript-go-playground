@@ -12,7 +12,7 @@ import { useSourceFile } from './composables/source-file'
 import {
   activeFile,
   cmd,
-  compilerSha,
+  buildInfo,
   compiling,
   currentManifest,
   currentVersion,
@@ -191,14 +191,14 @@ function updateCode(name: string, code: string) {
       <div self-end text-xs font-mono op70>
         compiler
         <a
-          v-if="compilerSha"
-          :href="`https://github.com/microsoft/typescript-go/commit/${compilerSha}`"
+          v-if="buildInfo"
+          :href="`${buildInfo.repo || 'https://github.com/microsoft/typescript-go'}/commit/${buildInfo.commit}`"
           target="_blank"
           rel="noopener"
           mr1
           hover:underline
         >
-          @{{ compilerSha.slice(0, 7) }}
+          @{{ buildInfo.commit.slice(0, 7) }}
         </a>
 
         <select v-model="currentVersion">
