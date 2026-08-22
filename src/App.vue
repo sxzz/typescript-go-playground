@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Analytics } from '@vercel/analytics/vue'
 import { useClipboard, useFetch, watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { computed, watch } from 'vue'
@@ -167,7 +166,6 @@ function updateCode(name: string, code: string) {
     :class="!loadingDebounced && 'overflow-y-scroll'"
   >
     <NavBar absolute />
-    <Analytics />
 
     <div
       flex="~ col"
