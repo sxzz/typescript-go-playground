@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { Analytics } from '@vercel/analytics/vue'
 import { useClipboard, useFetch, watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { computed, watch } from 'vue'
 import CodeEditor from './components/CodeEditor.vue'
 import NavBar from './components/NavBar.vue'
-import { Analytics } from '@vercel/analytics/vue'
 import PageFooter from './components/PageFooter.vue'
 import Tabs from './components/Tabs.vue'
 import { dark } from './composables/dark'

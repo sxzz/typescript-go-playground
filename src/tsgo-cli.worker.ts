@@ -71,6 +71,7 @@ function mountFs(files: Record<string, string>) {
   wasmFs = new WasmFs()
   wasmFs.volume.fromJSON(files, '/app')
   // @ts-expect-error missing types for wasmFs.fs
+  // eslint-disable-next-line unicorn/no-global-object-property-assignment
   globalThis.fs = wasmFs.fs
   return wasmFs
 }

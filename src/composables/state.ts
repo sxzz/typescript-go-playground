@@ -65,10 +65,7 @@ export const compilerSha = computed(
 )
 
 export function filesToObject() {
-  return Array.from(files.value.values()).map((file) => [
-    file.filename,
-    file.code,
-  ])
+  return Array.from(files.value.values(), (file) => [file.filename, file.code])
 }
 
 const LAST_STATE_KEY = 'tsgo:state'
@@ -106,6 +103,7 @@ export const serialized = computed(() =>
 )
 
 // serialize state to url
+// eslint-disable-next-line unicorn/no-top-level-side-effects
 watchEffect(() => {
   location.hash = utoa(serialized.value)
   localStorage.setItem(LAST_STATE_KEY, serialized.value)

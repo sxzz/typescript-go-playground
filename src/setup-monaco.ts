@@ -41,6 +41,7 @@ monaco.editor.registerEditorOpener({
   },
 })
 
+// eslint-disable-next-line unicorn/no-global-object-property-assignment
 globalThis.MonacoEnvironment = {
   getWorker(_: any, label: string) {
     if (label === 'json') {
