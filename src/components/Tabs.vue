@@ -13,9 +13,7 @@ const emit = defineEmits<{
 }>()
 
 const active = defineModel<string>({
-  default(props: { tabs: string[] }) {
-    return props.tabs[0]
-  },
+  default: (props) => (props.tabs as string[])[0]!,
 })
 
 watch(

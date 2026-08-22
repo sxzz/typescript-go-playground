@@ -4,6 +4,7 @@ import AnsiRegex from 'ansi-regex'
 import { computed, watch } from 'vue'
 import CodeEditor from './components/CodeEditor.vue'
 import NavBar from './components/NavBar.vue'
+import { Analytics } from '@vercel/analytics/vue'
 import PageFooter from './components/PageFooter.vue'
 import Tabs from './components/Tabs.vue'
 import { dark } from './composables/dark'
@@ -166,6 +167,7 @@ function updateCode(name: string, code: string) {
     :class="!loadingDebounced && 'overflow-y-scroll'"
   >
     <NavBar absolute />
+    <Analytics />
 
     <div
       flex="~ col"

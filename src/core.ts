@@ -1,5 +1,5 @@
 import { createBirpc, type BirpcReturn } from 'birpc'
-import { createGzipDecoder, unpackTar } from 'modern-tar'
+import { unpackTar } from 'modern-tar'
 import TsgoCliWorker from './tsgo-cli.worker?worker'
 import type { WorkerFunctions } from './tsgo-cli.worker'
 
@@ -14,7 +14,7 @@ export async function loadWasm(manifest: Record<string, any>) {
     })
     if (!response.body) throw new Error('No response body')
 
-    const tarStream = response.body.pipeThrough(createGzipDecoder())
+    const tarStream = response.body.pipeThrough(new DecompressionStream('gzip'))
     const [wasmFile] = await unpackTar(tarStream, {
       strip: 1,
       filter: (header) => header.name === 'tsgo.wasm',
@@ -22,7 +22,7 @@ export async function loadWasm(manifest: Record<string, any>) {
     if (!wasmFile?.data) {
       throw new Error('tsgo.wasm not found in package')
     }
-    wasmMod = await WebAssembly.compile(wasmFile.data.buffer as ArrayBuffer)
+    wasmMod = await WebAssembly.compile(wasmFile.data.buffer)
     wasmModCache[version] = wasmMod
   }
   return wasmMod
