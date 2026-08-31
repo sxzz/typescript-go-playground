@@ -44,7 +44,10 @@ export const { data: currentManifest, isFetching: isFetchingManifest } =
       refetch: true,
       beforeFetch(ctx) {
         ctx.options.cache =
-          currentVersion.value === 'latest' ? 'no-store' : 'force-cache'
+          currentVersion.value === 'latest' ||
+          currentVersion.value === 'nightly'
+            ? 'no-cache'
+            : 'force-cache'
         return ctx
       },
     },
