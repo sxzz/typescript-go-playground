@@ -2,7 +2,7 @@
   "name": "typescript-go-playground",
   "type": "module",
   "private": true,
-  "packageManager": "pnpm@11.22.0",
+  "packageManager": "pnpm@12.1.0",
   "description": "TypeScript Go Playground",
   "author": "Kevin Deng <sxzz@sxzz.moe>",
   "license": "MIT",
@@ -33,8 +33,7 @@
     "modern-tar": "^0.8.4",
     "monaco-editor": "^0.56.0",
     "shiki": "^4.4.3",
-    "vue": "^3.5.41",
-    "vue-router": "^5.2.0"
+    "vue": "^3.5.42"
   },
   "devDependencies": {
     "@iconify-json/catppuccin": "^1.2.17",
@@ -46,7 +45,7 @@
     "@unocss/reset": "66.8.1",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/tsconfig": "^0.9.1",
-    "eslint": "^10.9.0",
+    "eslint": "^10.9.1",
     "prettier": "^3.9.6",
     "typescript": "~6.0.3",
     "unocss": "^66.8.1",
