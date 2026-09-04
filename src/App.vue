@@ -159,6 +159,16 @@ function renameTab(oldName: string, newName: string) {
   )
 }
 
+function reorderTab(from: number, to: number) {
+  const entries = [...files.value]
+  const [moved] = entries.splice(from, 1)
+  if (!moved) return
+  entries.splice(to, 0, moved)
+  // Map iteration order is the tab order, and filesToObject() serializes it,
+  // so the new order persists to the URL and localStorage for free.
+  files.value = new Map(entries)
+}
+
 function removeTab(name: string) {
   files.value.get(name)?.dispose()
   files.value.delete(name)
@@ -182,6 +192,7 @@ function updateCode(name: string, code: string) {
         @add-tab="addTab"
         @rename-tab="renameTab"
         @remove-tab="removeTab"
+        @reorder-tab="reorderTab"
       >
         <template #default="{ value }">
           <div min-h-0 min-w-0 flex-1>

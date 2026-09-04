@@ -16,6 +16,7 @@ const emit = defineEmits<{
   addTab: [name: string]
   renameTab: [oldName: string, newName: string]
   removeTab: [name: string]
+  reorderTab: [from: number, to: number]
 }>()
 
 const active = defineModel<string>({
@@ -99,6 +100,44 @@ function removeTab(name: string) {
   }
 }
 
+const dragIndex = ref<number>()
+/** Insertion point, 0..tabs.length — not the index of a tab. */
+const dropIndex = ref<number>()
+
+function startDrag(e: DragEvent, index: number) {
+  dragIndex.value = index
+  e.dataTransfer!.effectAllowed = 'move'
+  // Firefox will not start a drag unless the payload is set.
+  e.dataTransfer!.setData('text/plain', tabs[index]!)
+}
+
+function dragOverTab(e: DragEvent, index: number) {
+  if (dragIndex.value === undefined) return
+  e.preventDefault()
+  e.dataTransfer!.dropEffect = 'move'
+  const { left, width } = (
+    e.currentTarget as HTMLElement
+  ).getBoundingClientRect()
+  dropIndex.value = index + (e.clientX > left + width / 2 ? 1 : 0)
+}
+
+function drop() {
+  const from = dragIndex.value
+  let to = dropIndex.value
+  dragIndex.value = dropIndex.value = undefined
+  if (from === undefined || to === undefined) return
+  // Lifting the dragged tab out shifts every later tab one step left.
+  if (to > from) to--
+  if (to !== from) emit('reorderTab', from, to)
+}
+
+/** Keyboard equivalent of the drag, since dragging needs a pointer. */
+function moveTab(index: number, delta: number) {
+  const to = index + delta
+  if (readonly || to < 0 || to >= tabs.length) return
+  emit('reorderTab', index, to)
+}
+
 function horizontalScroll(e: WheelEvent) {
   const el = tabsRef.value!
   const delta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY
@@ -114,23 +153,36 @@ function horizontalScroll(e: WheelEvent) {
         class="tab-strip"
         role="tablist"
         @wheel.prevent="horizontalScroll"
+        @dragover.prevent
+        @drop.prevent="drop"
       >
         <div
-          v-for="name of tabs"
+          v-for="(name, index) of tabs"
           :key="name"
           class="tab"
           :class="{
             'tab-active': active === name,
             'tab-warn': parseName(name).isError,
+            'is-dragging': dragIndex === index,
+            'drop-before': dropIndex === index,
+            'drop-after':
+              dropIndex === tabs.length && index === tabs.length - 1,
           }"
           :style="{ '--accent': tabAccent(name) }"
           role="tab"
           :aria-selected="active === name"
           tabindex="0"
+          :draggable="!readonly && renamingTab !== name"
           @click="active = name"
           @keydown.enter="active = name"
           @keydown.space.prevent="active = name"
+          @keydown.alt.left.prevent="moveTab(index, -1)"
+          @keydown.alt.right.prevent="moveTab(index, 1)"
           @dblclick="!readonly && startRename(name)"
+          @dragstart="startDrag($event, index)"
+          @dragover="dragOverTab($event, index)"
+          @drop.prevent="drop"
+          @dragend="dragIndex = dropIndex = undefined"
         >
           <input
             v-if="renamingTab === name"
@@ -205,6 +257,24 @@ function horizontalScroll(e: WheelEvent) {
 .tab-active:hover {
   color: var(--accent);
   --at-apply: 'font-600';
+}
+
+.is-dragging {
+  --at-apply: 'op35';
+}
+
+/* Insertion caret, drawn in the panel's accent like the active-tab marker. */
+.drop-before::before,
+.drop-after::after {
+  content: '';
+  --at-apply: 'absolute inset-y-1.5 w-2px rounded-full';
+  background-color: var(--accent);
+}
+.drop-before::before {
+  left: -1px;
+}
+.drop-after::after {
+  right: -1px;
 }
 
 .tab-marker {
