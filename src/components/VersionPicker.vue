@@ -27,6 +27,18 @@ const channel = computed(() =>
     : 'stable',
 )
 
+/**
+ * Where a build's commit can be read. Post-migration builds carry `repo`
+ * (now microsoft/TypeScript); builds without it predate the move, and their
+ * commits exist only in the archived microsoft/typescript-go.
+ */
+const commitUrl = computed(() => {
+  const info = buildInfo.value
+  if (!info) return undefined
+  const repo = info.repo || 'https://github.com/microsoft/typescript-go'
+  return `${repo}/commit/${info.commit}`
+})
+
 const resolved = computed(
   () => (currentManifest.value?.version as string) || currentVersion.value,
 )
@@ -63,7 +75,7 @@ const resolved = computed(
       <span class="version-divider" />
       <a
         class="version-commit"
-        :href="`${buildInfo.repo || 'https://github.com/microsoft/typescript-go'}/commit/${buildInfo.commit}`"
+        :href="commitUrl"
         target="_blank"
         rel="noopener"
         :title="`Compiler source at ${buildInfo.commit}`"

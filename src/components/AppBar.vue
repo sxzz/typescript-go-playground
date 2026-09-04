@@ -35,10 +35,10 @@ function reset() {
       <h1 class="wordmark-text">
         <a
           class="wordmark-brand"
-          href="https://github.com/microsoft/typescript-go"
+          href="https://github.com/microsoft/TypeScript"
           target="_blank"
           rel="noopener"
-          title="microsoft/typescript-go"
+          title="microsoft/TypeScript"
         >
           <span text-ts>TypeScript</span> <span text-go>Go</span>
         </a>
