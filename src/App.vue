@@ -39,6 +39,9 @@ import {
 
 const ansiRegex = AnsiRegex()
 
+/** Only the newest run owns `compiling`; superseded runs must not clear it. */
+let runId = 0
+
 watchDebounced([files, cmd, watchMode], () => compile(), {
   debounce: 200,
   deep: true,
@@ -60,13 +63,24 @@ async function compile() {
   let wasmMod = wasmModCache[currentVersion]
   if (!wasmMod) {
     loadingWasm.value = true
-    wasmMod = await loadWasm(currentManifest.value).finally(() => {
+    try {
+      wasmMod = await loadWasm(currentManifest.value)
+    } finally {
+      // This has to come down on every path. compile() refuses to start while
+      // loadingWasm is set, so leaking it on a stale return or a failed
+      // download leaves the playground unable to compile ever again.
+      loadingWasm.value = false
       initted.value = true
-    })
+    }
   }
 
-  if (current !== serialized.value) return
-  loadingWasm.value = false
+  if (current !== serialized.value) {
+    // Edits landed while the compiler was downloading, and the guard above
+    // turned them away. Nothing else will retry them, so retry here.
+    return compile()
+  }
+
+  const id = ++runId
   compiling.value = true
 
   terminateWorkers()
@@ -92,15 +106,24 @@ async function compile() {
     return
   }
 
-  const result = await cli
-    .compile(wasmMod, cmd.value, Object.fromEntries(filesToObject()))
-    .finally(() => releaseWorker(worker, cli))
-  if (current !== serialized.value) return
+  try {
+    const result = await cli.compile(
+      wasmMod,
+      cmd.value,
+      Object.fromEntries(filesToObject()),
+    )
+    if (current !== serialized.value) return
 
-  compiling.value = false
-  outputFiles.value = result.output
-  timeCost.value = result.time
-  outputActive.value = Object.keys(result.output)[0]
+    outputFiles.value = result.output
+    timeCost.value = result.time
+    outputActive.value = Object.keys(result.output)[0]
+  } catch (error) {
+    // A newer edit terminated this worker mid-run; its result is stale anyway.
+    if (id === runId) throw error
+  } finally {
+    releaseWorker(worker, cli)
+    if (id === runId) compiling.value = false
+  }
 }
 
 const outputTabs = computed(() => Object.keys(outputFiles.value))
