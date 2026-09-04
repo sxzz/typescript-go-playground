@@ -3,6 +3,9 @@ import editorWorker from 'monaco-editor/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/language/json/json.worker?worker'
 import tsWorker from 'monaco-editor/language/typescript/ts.worker?worker'
 import { activeFile, files } from './composables/state'
+import { defineEditorThemes } from './composables/theme'
+
+defineEditorThemes()
 
 monaco.typescript.typescriptDefaults.setCompilerOptions({
   target: monaco.typescript.ScriptTarget.ESNext,
