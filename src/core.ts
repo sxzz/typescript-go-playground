@@ -28,17 +28,23 @@ export async function loadWasm(manifest: Record<string, any>) {
   return wasmMod
 }
 
+export type TsgoCli = BirpcReturn<WorkerFunctions, MainFunctions>
+
 export const availableWorkers = Array.from(
   { length: 4 },
   () => new TsgoCliWorker(),
 )
-export const pendingWorkers = new Set<Worker>()
+/** Workers running a compile right now, each with its RPC channel. */
+export const pendingWorkers = new Map<Worker, TsgoCli | undefined>()
 
 export function terminateWorkers() {
   const length = pendingWorkers.size
   if (length === 0) return
 
-  for (const worker of pendingWorkers) {
+  for (const [worker, cli] of pendingWorkers) {
+    // Reject the in-flight call now. A terminated worker can never reply, so
+    // without this the caller waits out birpc's 60s timeout.
+    cli?.$close(new Error('[tsgo] compile superseded by a newer edit'))
     worker.terminate()
   }
   pendingWorkers.clear()
@@ -48,20 +54,17 @@ export function terminateWorkers() {
 }
 
 export function getWorker(): Worker {
-  let worker = availableWorkers.shift()
-  if (!worker) {
-    worker = new TsgoCliWorker()
-  }
-  pendingWorkers.add(worker)
+  const worker = availableWorkers.shift() ?? new TsgoCliWorker()
+  pendingWorkers.set(worker, undefined)
   return worker
 }
 
-export function releaseWorker(
-  worker: Worker,
-  cli?: BirpcReturn<WorkerFunctions, MainFunctions>,
-) {
+export function releaseWorker(worker: Worker, cli?: TsgoCli) {
   cli?.$close()
-  pendingWorkers.delete(worker)
+  // `delete` misses when terminateWorkers() already cleared this worker: it is
+  // dead and has been replaced, so returning it to the pool would hand a dead
+  // worker to the next compile, which then waits for a reply that never comes.
+  if (!pendingWorkers.delete(worker)) return
   availableWorkers.unshift(worker)
 }
 
@@ -72,12 +75,21 @@ export interface MainFunctions {
 export function createTsgoCli(
   worker: Worker,
   setOutputFiles: (files: Record<string, string | null>) => void,
-): BirpcReturn<WorkerFunctions, MainFunctions> {
-  return createBirpc<WorkerFunctions, MainFunctions>(
+): TsgoCli {
+  let listener: (event: MessageEvent) => void
+  const cli = createBirpc<WorkerFunctions, MainFunctions>(
     { setOutputFiles },
     {
       post: (data) => worker.postMessage(data),
-      on: (fn) => worker.addEventListener('message', ({ data }) => fn(data)),
+      on: (fn) => {
+        listener = ({ data }) => fn(data)
+        worker.addEventListener('message', listener)
+      },
+      // Workers are pooled and reused, so each channel has to detach on close
+      // or a worker collects a listener per compile.
+      off: () => worker.removeEventListener('message', listener),
     },
   )
+  pendingWorkers.set(worker, cli)
+  return cli
 }

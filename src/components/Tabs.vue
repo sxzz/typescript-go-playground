@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import { nextTick, ref, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 
-const { tabs, readonly } = defineProps<{
+const {
+  tabs,
+  readonly,
+  accent = 'ts',
+} = defineProps<{
   tabs: string[]
   readonly?: boolean
+  /** Which side of the compiler this panel shows: your source, or tsgo's output. */
+  accent?: 'ts' | 'go'
 }>()
 
 const emit = defineEmits<{
   addTab: [name: string]
   renameTab: [oldName: string, newName: string]
   removeTab: [name: string]
+  reorderTab: [from: number, to: number]
 }>()
 
 const active = defineModel<string>({
@@ -25,6 +32,25 @@ watch(
   },
   { deep: true },
 )
+
+const accentVar = computed(() =>
+  accent === 'go' ? 'var(--c-go)' : 'var(--c-ts)',
+)
+
+/** stderr keeps the alert color whether or not it is the tab you're on. */
+function tabAccent(name: string) {
+  return name === '<stderr>' ? 'var(--c-alert)' : accentVar.value
+}
+
+/** `<stdout>` / `<stderr>` are streams, not emitted files — they read differently. */
+function parseName(name: string) {
+  const stream = /^<(.+)>$/.exec(name)
+  return {
+    isStream: !!stream,
+    label: stream ? stream[1]! : name,
+    isError: name === '<stderr>',
+  }
+}
 
 const renamingTab = ref<string>()
 const renameInput = ref('')
@@ -74,112 +100,205 @@ function removeTab(name: string) {
   }
 }
 
+const dragIndex = ref<number>()
+/** Insertion point, 0..tabs.length — not the index of a tab. */
+const dropIndex = ref<number>()
+
+function startDrag(e: DragEvent, index: number) {
+  dragIndex.value = index
+  e.dataTransfer!.effectAllowed = 'move'
+  // Firefox will not start a drag unless the payload is set.
+  e.dataTransfer!.setData('text/plain', tabs[index]!)
+}
+
+function dragOverTab(e: DragEvent, index: number) {
+  if (dragIndex.value === undefined) return
+  e.preventDefault()
+  e.dataTransfer!.dropEffect = 'move'
+  const { left, width } = (
+    e.currentTarget as HTMLElement
+  ).getBoundingClientRect()
+  dropIndex.value = index + (e.clientX > left + width / 2 ? 1 : 0)
+}
+
+function drop() {
+  const from = dragIndex.value
+  let to = dropIndex.value
+  dragIndex.value = dropIndex.value = undefined
+  if (from === undefined || to === undefined) return
+  // Lifting the dragged tab out shifts every later tab one step left.
+  if (to > from) to--
+  if (to !== from) emit('reorderTab', from, to)
+}
+
+/** Keyboard equivalent of the drag, since dragging needs a pointer. */
+function moveTab(index: number, delta: number) {
+  const to = index + delta
+  if (readonly || to < 0 || to >= tabs.length) return
+  emit('reorderTab', index, to)
+}
+
 function horizontalScroll(e: WheelEvent) {
   const el = tabsRef.value!
   const delta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY
-  el.scrollTo({
-    left: el.scrollLeft + delta,
-  })
+  el.scrollTo({ left: el.scrollLeft + delta })
 }
 </script>
 
 <template>
-  <div flex="~ col" gap2>
-    <div flex items-center>
+  <section panel :style="{ '--accent': accentVar }">
+    <header panel-head>
       <div
         ref="tabsRef"
-        flex
-        flex-nowrap
-        overflow-x-auto
-        class="tabs"
+        class="tab-strip"
+        role="tablist"
         @wheel.prevent="horizontalScroll"
+        @dragover.prevent
+        @drop.prevent="drop"
       >
         <div
-          v-for="name of tabs"
+          v-for="(name, index) of tabs"
           :key="name"
-          border-b="~ 2"
-          group
-          flex
-          cursor-pointer
-          items-center
-          gap1
-          rounded-t
-          py1
-          pl2
-          :class="[
-            active === name && 'border-b-blue-500',
-            renamingTab === name && 'bg-gray:10',
-            readonly && 'pr2',
-          ]"
+          class="tab"
+          :class="{
+            'tab-active': active === name,
+            'tab-warn': parseName(name).isError,
+            'is-dragging': dragIndex === index,
+            'drop-before': dropIndex === index,
+            'drop-after':
+              dropIndex === tabs.length && index === tabs.length - 1,
+          }"
+          :style="{ '--accent': tabAccent(name) }"
+          role="tab"
+          :aria-selected="active === name"
+          tabindex="0"
+          :draggable="!readonly && renamingTab !== name"
           @click="active = name"
+          @keydown.enter="active = name"
+          @keydown.space.prevent="active = name"
+          @keydown.alt.left.prevent="moveTab(index, -1)"
+          @keydown.alt.right.prevent="moveTab(index, 1)"
           @dblclick="!readonly && startRename(name)"
+          @dragstart="startDrag($event, index)"
+          @dragover="dragOverTab($event, index)"
+          @drop.prevent="drop"
+          @dragend="dragIndex = dropIndex = undefined"
         >
-          <slot name="tab-prefix" :value="name" />
-
           <input
             v-if="renamingTab === name"
             ref="rename-input"
             v-model="renameInput"
+            class="tab-rename"
             style="field-sizing: content"
-            rounded-none
-            border-none
-            bg-transparent
-            p0
-            text-sm
-            font-mono
-            outline-none
             spellcheck="false"
             @keydown.enter.prevent="finishRename(name)"
             @keydown.esc.prevent="cancelRename()"
             @blur="finishRename(name)"
           />
-          <span
-            v-else
-            :class="active === name ? 'text-blue-500' : 'op70'"
-            whitespace-nowrap
-            text-sm
-            font-mono
-          >
-            {{ name }}
+          <span v-else class="tab-label">
+            <template v-if="parseName(name).isStream">
+              <span class="tab-bracket">&lt;</span>{{ parseName(name).label
+              }}<span class="tab-bracket">&gt;</span>
+            </template>
+            <template v-else>{{ name }}</template>
           </span>
 
           <button
             v-if="!readonly && tabs.length > 1"
-            title="Remove"
-            p="0.5"
-            :class="active === name && 'op60'"
-            rounded
-            op0
-            transition-300
-            transition-opacity
-            hover:bg-gray:30
-            group-hover:opacity-60
+            type="button"
+            class="tab-close"
+            :title="`Close ${name}`"
             @click.stop="removeTab(name)"
           >
             <div i-ri:close-line />
           </button>
+
+          <span v-if="active === name" class="tab-marker" />
         </div>
       </div>
 
-      <button v-if="!readonly" ml3 rounded p1 hover:bg-gray:30 @click="addTab">
-        <div i-ri:add-fill text-lg />
+      <button
+        v-if="!readonly"
+        type="button"
+        class="tab-add"
+        title="New file"
+        @click="addTab"
+      >
+        <div i-ri:add-line text-base />
       </button>
-    </div>
+
+      <div flex-1 />
+      <slot name="head-end" />
+    </header>
 
     <slot :value="active" />
-  </div>
+  </section>
 </template>
 
-<style>
-.tabs::-webkit-scrollbar {
-  height: 2px;
+<style scoped>
+.tab-strip {
+  --at-apply: 'flex flex-nowrap items-stretch overflow-x-auto';
+  scrollbar-width: none;
+}
+.tab-strip::-webkit-scrollbar {
+  display: none;
 }
 
-.tabs::-webkit-scrollbar-track {
-  background-color: var(--c-border);
+.tab {
+  --at-apply: 'relative flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap px-2.5 py-2 text-xs text-ink-3 transition-colors duration-150 hover:text-ink-2';
+}
+.tab-warn:not(.tab-active),
+.tab-warn:not(.tab-active):hover {
+  color: var(--c-alert);
+  --at-apply: 'op65';
 }
 
-.tabs::-webkit-scrollbar-thumb {
-  --at-apply: 'bg-blue-500';
+.tab-active,
+.tab-active:hover {
+  color: var(--accent);
+  --at-apply: 'font-600';
+}
+
+.is-dragging {
+  --at-apply: 'op35';
+}
+
+/* Insertion caret, drawn in the panel's accent like the active-tab marker. */
+.drop-before::before,
+.drop-after::after {
+  content: '';
+  --at-apply: 'absolute inset-y-1.5 w-2px rounded-full';
+  background-color: var(--accent);
+}
+.drop-before::before {
+  left: -1px;
+}
+.drop-after::after {
+  right: -1px;
+}
+
+.tab-marker {
+  --at-apply: 'absolute inset-x-1.5 -bottom-px h-2px rounded-full';
+  background-color: var(--accent);
+}
+
+.tab-bracket {
+  --at-apply: 'op40';
+}
+
+.tab-rename {
+  --at-apply: 'border-none rounded-none bg-transparent p-0 text-xs font-600 outline-none';
+  color: var(--accent);
+}
+
+.tab-close {
+  --at-apply: 'rounded p-0.5 op0 transition-opacity duration-200 text-ink-3 hover:bg-fill-strong hover:text-ink focus-visible:op100';
+}
+.tab:hover .tab-close {
+  --at-apply: 'op70';
+}
+
+.tab-add {
+  --at-apply: 'ml-1 shrink-0 rounded-md p-1 text-ink-3 transition-colors duration-150 hover:bg-fill hover:text-ink';
 }
 </style>

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { useClipboard, useFetch, watchDebounced } from '@vueuse/core'
+import { useClipboard, watchDebounced } from '@vueuse/core'
 import AnsiRegex from 'ansi-regex'
 import { computed, watch } from 'vue'
+import AppBar from './components/AppBar.vue'
 import CodeEditor from './components/CodeEditor.vue'
-import NavBar from './components/NavBar.vue'
+import CommandBar from './components/CommandBar.vue'
 import PageFooter from './components/PageFooter.vue'
 import Tabs from './components/Tabs.vue'
 import { dark } from './composables/dark'
@@ -12,10 +13,8 @@ import { useSourceFile } from './composables/source-file'
 import {
   activeFile,
   cmd,
-  buildInfo,
   compiling,
   currentManifest,
-  currentVersion,
   files,
   filesToObject,
   initted,
@@ -29,7 +28,6 @@ import {
   timeCost,
   watchMode,
 } from './composables/state'
-import { generateDates } from './composables/version'
 import {
   createTsgoCli,
   getWorker,
@@ -39,17 +37,10 @@ import {
   wasmModCache,
 } from './core'
 
-const { data: pkgMeta } = useFetch(
-  'https://data.jsdelivr.com/v1/package/npm/tsgo-wasm',
-).json()
-
-const versions = computed(() => {
-  if (!pkgMeta.value) return null
-  return pkgMeta.value.versions.filter((v: string) => v.startsWith('7.'))
-})
-
 const ansiRegex = AnsiRegex()
-const dates = generateDates()
+
+/** Only the newest run owns `compiling`; superseded runs must not clear it. */
+let runId = 0
 
 watchDebounced([files, cmd, watchMode], () => compile(), {
   debounce: 200,
@@ -72,13 +63,24 @@ async function compile() {
   let wasmMod = wasmModCache[currentVersion]
   if (!wasmMod) {
     loadingWasm.value = true
-    wasmMod = await loadWasm(currentManifest.value).finally(() => {
+    try {
+      wasmMod = await loadWasm(currentManifest.value)
+    } finally {
+      // This has to come down on every path. compile() refuses to start while
+      // loadingWasm is set, so leaking it on a stale return or a failed
+      // download leaves the playground unable to compile ever again.
+      loadingWasm.value = false
       initted.value = true
-    })
+    }
   }
 
-  if (current !== serialized.value) return
-  loadingWasm.value = false
+  if (current !== serialized.value) {
+    // Edits landed while the compiler was downloading, and the guard above
+    // turned them away. Nothing else will retry them, so retry here.
+    return compile()
+  }
+
+  const id = ++runId
   compiling.value = true
 
   terminateWorkers()
@@ -104,16 +106,28 @@ async function compile() {
     return
   }
 
-  const result = await cli
-    .compile(wasmMod, cmd.value, Object.fromEntries(filesToObject()))
-    .finally(() => releaseWorker(worker, cli))
-  if (current !== serialized.value) return
+  try {
+    const result = await cli.compile(
+      wasmMod,
+      cmd.value,
+      Object.fromEntries(filesToObject()),
+    )
+    if (current !== serialized.value) return
 
-  compiling.value = false
-  outputFiles.value = result.output
-  timeCost.value = result.time
-  outputActive.value = Object.keys(result.output)[0]
+    outputFiles.value = result.output
+    timeCost.value = result.time
+    outputActive.value = Object.keys(result.output)[0]
+  } catch (error) {
+    // A newer edit terminated this worker mid-run; its result is stale anyway.
+    if (id === runId) throw error
+  } finally {
+    releaseWorker(worker, cli)
+    if (id === runId) compiling.value = false
+  }
 }
+
+const outputTabs = computed(() => Object.keys(outputFiles.value))
+const hasOutput = computed(() => outputTabs.value.length > 0)
 
 function highlight(code?: string | null) {
   if (!code) return ''
@@ -145,6 +159,16 @@ function renameTab(oldName: string, newName: string) {
   )
 }
 
+function reorderTab(from: number, to: number) {
+  const entries = [...files.value]
+  const [moved] = entries.splice(from, 1)
+  if (!moved) return
+  entries.splice(to, 0, moved)
+  // Map iteration order is the tab order, and filesToObject() serializes it,
+  // so the new order persists to the URL and localStorage for free.
+  files.value = new Map(entries)
+}
+
 function removeTab(name: string) {
   files.value.get(name)?.dispose()
   files.value.delete(name)
@@ -156,198 +180,161 @@ function updateCode(name: string, code: string) {
 </script>
 
 <template>
-  <div
-    flex="~ col"
-    relative
-    h-100dvh
-    items-center
-    px10
-    pt4
-    :class="!loadingDebounced && 'overflow-y-scroll'"
-  >
-    <NavBar absolute />
+  <div class="shell">
+    <AppBar />
+    <CommandBar />
 
-    <div
-      flex="~ col"
-      gap2
-      py12
-      transition-all
-      :class="loadingDebounced && 'animate-pulse translate-y-35dvh'"
-    >
-      <h1 flex="~ wrap" items-center gap2 text-3xl font-bold>
-        <div i-catppuccin:typescript-test />
-        <a
-          href="https://github.com/microsoft/typescript-go"
-          target="_blank"
-          class="text-#8aadf4"
-          >TypeScript Go</a
-        >
-        Playground
-      </h1>
-      <div v-if="loadingDebounced" self-end text-sm op70>
-        Loading
-        <a :href="currentManifest?.dist.tarball || ''">WASM</a>...
-      </div>
-      <div self-end text-xs font-mono op70>
-        compiler
-        <a
-          v-if="buildInfo"
-          :href="`${buildInfo.repo || 'https://github.com/microsoft/typescript-go'}/commit/${buildInfo.commit}`"
-          target="_blank"
-          rel="noopener"
-          mr1
-          hover:underline
-        >
-          @{{ buildInfo.commit.slice(0, 7) }}
-        </a>
-
-        <select v-model="currentVersion">
-          <optgroup v-if="versions" label="Stable Versions">
-            <option value="latest">Latest</option>
-            <option v-for="version of versions" :key="version" :value="version">
-              {{ version }}
-            </option>
-          </optgroup>
-
-          <optgroup label="Nightly Builds">
-            <option value="nightly">Latest Nightly</option>
-            <option v-for="date of dates" :key="date" :value="date">
-              {{ date }}
-            </option>
-          </optgroup>
-        </select>
-      </div>
-    </div>
-
-    <div
-      :class="loadingDebounced && 'op0 invisible'"
-      min-h-0
-      w-full
-      flex
-      flex-1
-      flex-col
-      items-center
-      gap4
-      transition-opacity
-      duration-500
-      md:flex-row
-    >
-      <div flex="~ col" h-full min-w-0 w-full flex-1 gap2>
-        <Tabs
-          v-model="activeFile"
-          :tabs
-          h-full
-          min-h-0
-          min-w-0
-          w-full
-          flex-1
-          @add-tab="addTab"
-          @rename-tab="renameTab"
-          @remove-tab="removeTab"
-        >
-          <template #default="{ value }">
-            <div min-h-0 min-w-0 flex-1>
-              <CodeEditor
-                :model-value="files.get(value)!.code"
-                :model="files.get(value)!.model"
-                :uri="files.get(value)!.uri"
-                input
-                h-full
-                min-h-0
-                w-full
-                @update:model-value="updateCode(value, $event)"
-              />
-            </div>
-          </template>
-        </Tabs>
-        <div flex items-center gap2 text-sm font-mono>
-          <span>❯ tsgo</span>
-          <span v-if="watchMode"> -w</span>
-          <input
-            v-model="cmd"
-            type="text"
-            placeholder="command, e.g -v"
-            flex-1
-            border
-            rounded
-            p1
-          />
-          <!-- <label> <input v-model="watchMode" type="checkbox" /> watch</label> -->
-        </div>
-      </div>
-
-      <div flex="~ col" h-full min-w-0 w-full flex-1 items-center gap2>
-        <div
-          v-if="compiling && !watchMode"
-          flex="~ col"
-          h-full
-          w-full
-          items-center
-          justify-center
-          gap3
-        >
-          <div i-logos:typescript-icon-round animate-bounce text-6xl />
-          Compiling...
-        </div>
-
-        <Tabs
-          v-else
-          v-model="outputActive"
-          :tabs="Object.keys(outputFiles)"
-          readonly
-          h-full
-          min-h-0
-          w-full
-        >
-          <div group relative h-full min-h-0 w-full>
-            <template v-if="outputActive">
-              <div
-                v-if="outputActive.startsWith('<')"
-                class="output"
-                :class="{ 'text-red': outputActive === '<stderr>' }"
-                v-text="outputFiles[outputActive]?.replace(ansiRegex, '')"
-              />
-              <div
-                v-else
-                class="output"
-                v-html="highlight(outputFiles[outputActive])"
-              />
-            </template>
-            <button
-              absolute
-              right-4
-              top-4
-              rounded-lg
-              p2
-              op0
-              transition-opacity
-              hover:bg-gray
-              hover:bg-opacity-10
-              group-hover:opacity-100
-              @click="handleCopy"
-            >
-              <div
-                :class="
-                  copied ? 'i-ri:check-line text-green' : 'i-ri:file-copy-line'
-                "
-              />
-            </button>
+    <main class="workbench thin-scroll">
+      <Tabs
+        v-model="activeFile"
+        :tabs
+        accent="ts"
+        @add-tab="addTab"
+        @rename-tab="renameTab"
+        @remove-tab="removeTab"
+        @reorder-tab="reorderTab"
+      >
+        <template #default="{ value }">
+          <div min-h-0 min-w-0 flex-1>
+            <CodeEditor
+              :model-value="files.get(value)!.code"
+              :model="files.get(value)!.model"
+              :uri="files.get(value)!.uri"
+              h-full
+              min-h-0
+              w-full
+              @update:model-value="updateCode(value, $event)"
+            />
           </div>
-        </Tabs>
+        </template>
+      </Tabs>
 
-        <div v-if="timeCost && !compiling" self-end op70>
-          {{ Math.round(timeCost) }} ms
+      <Tabs v-model="outputActive" :tabs="outputTabs" readonly accent="go">
+        <template #head-end>
+          <button
+            v-if="hasOutput"
+            type="button"
+            class="copy"
+            :title="copied ? 'Copied' : 'Copy output'"
+            @click="handleCopy"
+          >
+            <div
+              :class="
+                copied ? 'i-ri:check-line text-ok' : 'i-ri:file-copy-line'
+              "
+            />
+          </button>
+        </template>
+
+        <div class="pane">
+          <div v-if="loadingDebounced" class="pane-state">
+            <div i-ri:download-cloud-2-line animate-pulse text-2xl text-go />
+            <p class="pane-state-title">Downloading the tsgo compiler</p>
+            <p class="pane-state-note">
+              The WebAssembly build is fetched once, then cached. You can start
+              writing already.
+            </p>
+          </div>
+
+          <div v-else-if="compiling && !hasOutput" class="pane-state">
+            <div i-ri:loader-4-line animate-spin text-2xl text-go />
+            <p class="pane-state-title">Compiling</p>
+          </div>
+
+          <div v-else-if="!hasOutput" class="pane-state">
+            <p class="pane-state-title">Nothing emitted</p>
+            <p class="pane-state-note">
+              tsgo produced no files or diagnostics for this command.
+            </p>
+          </div>
+
+          <template v-else-if="outputActive">
+            <div
+              v-if="outputActive.startsWith('<')"
+              class="output thin-scroll"
+              :class="[
+                outputActive === '<stderr>' && 'text-alert',
+                compiling && 'is-stale',
+              ]"
+              v-text="outputFiles[outputActive]?.replace(ansiRegex, '')"
+            />
+            <div
+              v-else
+              class="output thin-scroll"
+              :class="compiling && 'is-stale'"
+              v-html="highlight(outputFiles[outputActive])"
+            />
+          </template>
         </div>
-      </div>
-    </div>
+      </Tabs>
+    </main>
 
     <PageFooter />
   </div>
 </template>
 
+<style scoped>
+.shell {
+  --at-apply: 'h-100dvh flex flex-col overflow-hidden bg-field';
+}
+
+.workbench {
+  --at-apply: 'min-h-0 flex-1 grid gap-3 overflow-y-auto p-3 md:p-4';
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Panels get their own height on narrow screens so the workbench scrolls. */
+.workbench > :first-child {
+  min-height: 46dvh;
+}
+.workbench > :last-child {
+  min-height: 40dvh;
+}
+
+@media (min-width: 768px) {
+  .workbench {
+    --at-apply: 'overflow-hidden';
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .workbench > :first-child,
+  .workbench > :last-child {
+    min-height: 0;
+  }
+}
+
+.pane {
+  --at-apply: 'relative min-h-0 min-w-0 flex-1';
+}
+
+.pane-state {
+  --at-apply: 'h-full flex flex-col items-center justify-center gap-2 px-8 text-center';
+}
+
+.pane-state-title {
+  --at-apply: 'm-0 text-sm text-ink font-500';
+}
+
+.pane-state-note {
+  --at-apply: 'm-0 max-w-70 text-xs text-ink-3 leading-relaxed';
+}
+
+.copy {
+  --at-apply: 'shrink-0 rounded-md p-1.5 text-ink-3 transition-colors duration-150 hover:bg-fill hover:text-ink disabled:op30 disabled:hover:bg-transparent';
+}
+</style>
+
 <style>
 .output {
-  --at-apply: dark-bg-#1E1E1E w-full h-full overflow-scroll whitespace-pre
-    border rounded-lg p2 text-sm font-mono;
+  --at-apply: 'h-full w-full overflow-auto whitespace-pre p-3 text-xs leading-relaxed transition-opacity duration-200';
+}
+
+.output.is-stale {
+  --at-apply: 'op40';
+}
+
+/* Shiki inlines its theme background; the panel already provides one. */
+.output pre.shiki {
+  margin: 0;
+  background-color: transparent !important;
 }
 </style>

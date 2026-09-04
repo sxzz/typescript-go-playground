@@ -3,11 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      name="description"
+      content="Run the Go-native TypeScript compiler in your browser. Write TypeScript, pass real tsgo CLI flags, and read what it emits."
+    />
+    <meta name="theme-color" content="#e8edf2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0f14" media="(prefers-color-scheme: dark)" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
     />
     <title>TypeScript Go Playground</title>
+    <script>
+      // Paint the right theme on the first frame instead of flashing white.
+      try {
+        var pref = localStorage.getItem('vueuse-color-scheme') || 'auto'
+        var isDark =
+          pref === 'dark' ||
+          (pref === 'auto' &&
+            matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.classList.toggle('dark', isDark)
+      } catch {}
+    </script>
   </head>
   <body>
     <div id="app"></div>

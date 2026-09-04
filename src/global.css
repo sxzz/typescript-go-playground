@@ -1,26 +1,118 @@
-html {
-  height: 100dvh;
-  overflow: hidden;
+/* ---------------------------------------------------------------------------
+ * Palette. Two accents, each with a job:
+ *   --c-ts  TypeScript blue — everything you wrote (source tabs, source panel)
+ *   --c-go  Go cyan         — everything tsgo did (prompt, output tabs, timing)
+ * ------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  --c-field: #e8edf2;
+  --c-panel: #ffffff;
+  --c-panel-alt: #f1f5f9;
+  --c-line: #d6dee7;
+  --c-line-soft: #e5eaf1;
+
+  --c-ink: #0d141c;
+  --c-ink-2: #59677a;
+  --c-ink-3: #8695a5;
+
+  --c-ts: #2f6fbe;
+  --c-go: #0089ac;
+  --c-go-rgb: 0 137 172;
+  --c-alert: #cb2b3a;
+  --c-ok: #0f8a57;
+  --c-heart: #ec4899;
+
+  --c-fill: rgb(13 20 28 / 6%);
+  --c-fill-strong: rgb(13 20 28 / 10%);
+
+  --font-mono:
+    'IBM Plex Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas,
+    monospace;
+  --un-default-border-color: var(--c-line);
 }
 
 html.dark {
   color-scheme: dark;
-  background-color: var(--c-bg-base);
+
+  --c-field: #0b0f14;
+  --c-panel: #141a22;
+  --c-panel-alt: #10161d;
+  --c-line: #232c37;
+  --c-line-soft: #1b232c;
+
+  --c-ink: #e4ebf2;
+  --c-ink-2: #8b99a9;
+  --c-ink-3: #5e6c7b;
+
+  --c-ts: #63a4ea;
+  --c-go: #2fc6e8;
+  --c-go-rgb: 47 198 232;
+  --c-alert: #ff7a85;
+  --c-ok: #3dd68c;
+
+  --c-fill: rgb(255 255 255 / 7%);
+  --c-fill-strong: rgb(255 255 255 / 12%);
 }
 
-html.dark textarea {
-  background-color: #121212;
+html,
+body,
+#app {
+  height: 100dvh;
 }
 
-:root {
-  --c-border: #eee;
-  --c-bg-base: #fff;
-  --c-text-base: #232323;
-  --un-default-border-color: var(--c-border);
+html {
+  overflow: hidden;
 }
 
-.dark {
-  --c-border: #333;
-  --c-bg-base: #1e1e1e;
-  --c-text-base: #fff;
+body {
+  margin: 0;
+  background-color: var(--c-field);
+  color: var(--c-ink);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Every interactive surface gets a visible ring. Outlines follow border-radius. */
+:where(a, button, select, input, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--c-go);
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: rgb(var(--c-go-rgb) / 22%);
+}
+
+/* Thin scrollbars on our own surfaces only — Monaco manages its own. */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-line) transparent;
+}
+
+.thin-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.thin-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-color: var(--c-line);
+  background-clip: content-box;
+}
+
+.thin-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--c-ink-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
