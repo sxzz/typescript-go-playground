@@ -11,8 +11,8 @@ import { shiki, themeDark, themeLight } from './composables/shiki'
 import { useSourceFile } from './composables/source-file'
 import {
   activeFile,
-  cmd,
   buildInfo,
+  cmd,
   compiling,
   currentManifest,
   currentVersion,
